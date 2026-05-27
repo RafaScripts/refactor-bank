@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.refactbank.com.br'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://apibank.rafascripts.dev.br'
 
 class ApiClient {
   private baseUrl: string
