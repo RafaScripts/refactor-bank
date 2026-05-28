@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useSession } from 'next-auth/react'
-import { paymentsApi } from '@/lib/api'
+import { paymentsApi, balanceApi } from '@/lib/api'
 import { formatCurrency, detectPixKeyType } from '@/lib/format'
 import { QrCode, Building, FileText, Loader2, CheckCircle, AlertCircle, Search } from 'lucide-react'
 
@@ -57,7 +57,14 @@ export default function CashOutPage() {
             bank.code.includes(bankSearch)
   )
 
-  const balance = session?.user?.bankAccount?.balance || 0
+  const [balance, setBalance] = useState(0)
+
+  useEffect(() => {
+    if (!token) return
+    balanceApi.getBalance(token).then(data => {
+      setBalance((data.fiat?.balance || 0) / 100)
+    }).catch(() => setBalance(0))
+  }, [token])
 
   const handleSendPix = async (e: React.FormEvent) => {
     e.preventDefault()

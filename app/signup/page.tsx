@@ -189,11 +189,11 @@ export default function SignupPage() {
       })
       
       if (result?.ok) {
-        router.push('/dashboard')
-        router.refresh()
+        // Force full page reload to ensure session cookie is set
+        window.location.href = '/dashboard'
       } else {
         // Signup succeeded but auto-login failed, redirect to login
-        router.push('/login')
+        window.location.href = '/login'
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao criar conta. Tente novamente.')

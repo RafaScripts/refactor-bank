@@ -1,33 +1,29 @@
+import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+export default auth((req) => {
+  const { nextUrl } = req
+  const isLoggedIn = !!req.auth
+  const pathname = nextUrl.pathname
 
-  // Check if the request is for a protected route
+  // Protected routes: redirect to login if not authenticated
   if (pathname.startsWith('/dashboard')) {
-    const token = request.cookies.get('next-auth.session-token')?.value
-      || request.cookies.get('__Secure-next-auth.session-token')?.value
-
-    if (!token) {
-      const loginUrl = new URL('/login', request.url)
+    if (!isLoggedIn) {
+      const loginUrl = new URL('/login', nextUrl)
       loginUrl.searchParams.set('callbackUrl', pathname)
       return NextResponse.redirect(loginUrl)
     }
   }
 
-  // Redirect authenticated users away from auth pages
+  // Auth pages: redirect to dashboard if already authenticated
   if (pathname === '/login' || pathname === '/signup') {
-    const token = request.cookies.get('next-auth.session-token')?.value
-      || request.cookies.get('__Secure-next-auth.session-token')?.value
-
-    if (token) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+    if (isLoggedIn) {
+      return NextResponse.redirect(new URL('/dashboard', nextUrl))
     }
   }
 
   return NextResponse.next()
-}
+})
 
 export const config = {
   matcher: ['/dashboard/:path*', '/login', '/signup'],

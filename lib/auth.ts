@@ -13,6 +13,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log('[AUTH] Missing credentials')
           return null
         }
 
@@ -30,20 +31,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           })
           
           if (!response.ok) {
+            console.log('[AUTH] Response not OK:', response.status)
             return null
           }
 
           const responseData = await response.json()
+          console.log('[AUTH] Response data:', JSON.stringify(responseData, null, 2))
           
           // API returns { statusCode, message, data: { accessToken, user, bankAccount } }
           const data = responseData.data || responseData
           
           if (!data.accessToken) {
+            console.log('[AUTH] No accessToken in response')
             return null
           }
 
-          // Return user object with accessToken
-          return {
+          // Return minimal user object to keep JWT small (< 4KB cookie limit)
+          // Store only essential fields; bankAccount details can be fetched via API
+          const user = {
             id: data.user?.id || data.user?._id || 'unknown',
             name: data.user?.name || '',
             email: data.user?.email || credentials.email as string,
@@ -51,31 +56,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             doc: data.user?.cpfCnpj || data.user?.doc || '',
             type: data.user?.type || 'PF',
             status: data.user?.status || 'PENDING',
-            businessAccount: data.user?.businessAccount || data.bankAccount?.businessAccount || false,
-            bankAccount: data.bankAccount || null,
+            businessAccount: data.user?.businessAccount || false,
             bankAccountId: data.bankAccount?._id || data.bankAccount?.id || null,
+            bankAccountStatus: data.bankAccount?.status || 'PENDING',
           }
+          console.log('[AUTH] Returning user (minimal):', JSON.stringify(user, null, 2))
+          return user
         } catch (error) {
-          console.error('Auth error:', error)
+          console.error('[AUTH] Error:', error)
           return null
         }
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      console.log('[JWT CALLBACK] trigger:', trigger, 'hasUser:', !!user, 'token.sub:', token.sub)
       if (user) {
         token.accessToken = user.accessToken
         token.doc = user.doc
         token.type = user.type
         token.status = user.status
         token.businessAccount = user.businessAccount
-        token.bankAccount = user.bankAccount
         token.bankAccountId = user.bankAccountId
+        token.bankAccountStatus = user.bankAccountStatus
+        console.log('[JWT CALLBACK] Token updated with user data')
       }
       return token
     },
     async session({ session, token }) {
+      console.log('[SESSION CALLBACK] token.sub:', token.sub, 'hasAccessToken:', !!token.accessToken)
       if (session.user) {
         session.user.id = token.sub || ''
         session.user.accessToken = token.accessToken as string
@@ -83,14 +93,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.type = token.type as 'PF' | 'PJ'
         session.user.status = token.status as string
         session.user.businessAccount = token.businessAccount as boolean
-        session.user.bankAccount = token.bankAccount as {
-          externalId: string
-          accountNumber: string
-          branch: string
-          status: string
-          balance: number
-        } | null
         session.user.bankAccountId = token.bankAccountId as string | null
+        session.user.bankAccountStatus = token.bankAccountStatus as string
       }
       return session
     },
@@ -100,6 +104,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: {
     strategy: 'jwt',
+  },
+  cookies: {
+    sessionToken: {
+      name: `__Secure-authjs.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+      },
+    },
   },
   trustHost: true,
 })
@@ -112,14 +127,8 @@ declare module 'next-auth' {
     type: 'PF' | 'PJ'
     status: string
     businessAccount: boolean
-    bankAccount: {
-      externalId: string
-      accountNumber: string
-      branch: string
-      status: string
-      balance: number
-    } | null
     bankAccountId: string | null
+    bankAccountStatus: string
   }
   
   interface Session {
@@ -133,14 +142,8 @@ declare module 'next-auth' {
       type: 'PF' | 'PJ'
       status: string
       businessAccount: boolean
-      bankAccount: {
-        externalId: string
-        accountNumber: string
-        branch: string
-        status: string
-        balance: number
-      } | null
       bankAccountId: string | null
+      bankAccountStatus: string
     }
   }
 }

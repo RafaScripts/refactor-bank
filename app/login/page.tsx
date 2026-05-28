@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -11,8 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
-  const router = useRouter()
-  
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -32,14 +29,16 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        setError('Credenciais inválidas. Verifique seu e-mail e senha.')
-      } else if (result?.ok) {
-        router.push('/dashboard')
-        router.refresh()
+        setError('E-mail ou senha incorretos.')
+        setIsLoading(false)
+        return
       }
-    } catch {
+
+      // Force full page reload to ensure session cookie is set and middleware picks it up
+      window.location.href = '/dashboard'
+    } catch (err) {
+      console.error('[LOGIN] Exception:', err)
       setError('Ocorreu um erro ao fazer login. Tente novamente.')
-    } finally {
       setIsLoading(false)
     }
   }

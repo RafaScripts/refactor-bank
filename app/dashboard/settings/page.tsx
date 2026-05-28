@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { pixKeysApi, type PixKey } from '@/lib/api'
+import { pixKeysApi, accountApi, type PixKey, type AccountStatus } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
 import { User, Key, Building2, Lock, Copy, Trash2, Plus, Loader2 } from 'lucide-react'
 
@@ -21,6 +21,8 @@ export default function SettingsPage() {
   const [showAddKey, setShowAddKey] = useState(false)
   const [newKeyType, setNewKeyType] = useState('EVP')
   const [addingKey, setAddingKey] = useState(false)
+  const [accountStatus, setAccountStatus] = useState<AccountStatus | null>(null)
+  const [loadingAccount, setLoadingAccount] = useState(true)
 
   useEffect(() => {
     if (!token) return
@@ -37,6 +39,23 @@ export default function SettingsPage() {
       }
     }
     fetchKeys()
+  }, [token])
+
+  useEffect(() => {
+    if (!token) return
+    const fetchAccount = async () => {
+      setLoadingAccount(true)
+      try {
+        const data = await accountApi.getStatus(token)
+        setAccountStatus(data)
+      } catch (err) {
+        console.error('Erro ao carregar status da conta:', err)
+        setAccountStatus(null)
+      } finally {
+        setLoadingAccount(false)
+      }
+    }
+    fetchAccount()
   }, [token])
 
   const handleAddKey = async () => {
@@ -116,7 +135,14 @@ export default function SettingsPage() {
           <CardDescription>Informações da sua conta</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {user?.bankAccount ? (
+          {loadingAccount ? (
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Skeleton className="h-10" />
+              <Skeleton className="h-10" />
+              <Skeleton className="h-10" />
+              <Skeleton className="h-10" />
+            </div>
+          ) : accountStatus ? (
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Banco</Label>
@@ -124,15 +150,15 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Agência</Label>
-                <Input value={user.bankAccount.branch} disabled />
+                <Input value={accountStatus.branch} disabled />
               </div>
               <div className="space-y-2">
                 <Label>Conta</Label>
-                <Input value={user.bankAccount.accountNumber} disabled />
+                <Input value={accountStatus.accountNumber} disabled />
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Input value={user.bankAccount.status} disabled />
+                <Input value={accountStatus.status} disabled />
               </div>
             </div>
           ) : (

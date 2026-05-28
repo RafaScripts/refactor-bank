@@ -89,9 +89,9 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (!token) {
-      router.push('/login')
+      window.location.href = '/login'
     }
-  }, [token, router])
+  }, [token])
 
   const steps: { id: Step; label: string; icon: React.ReactNode }[] = [
     { id: 'address', label: 'Endereço', icon: <Home className="h-4 w-4" /> },

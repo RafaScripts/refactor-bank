@@ -15,9 +15,9 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login')
+      window.location.href = '/login'
     }
-  }, [status, router])
+  }, [status])
 
   if (status === 'loading') {
     return (
