@@ -208,32 +208,32 @@ export default function OnboardingPage() {
 
       await accountApi.requestAccount(accountData, token)
 
-      // 2. Upload documents
-      const formData = new FormData()
-      
+      // 2. Upload documents one by one (backend expects 'file' + 'documentType' per request)
+      const uploadPromises: Promise<any>[] = []
+
       if (documents.rgFront.file) {
-        formData.append('rgFront', documents.rgFront.file)
+        uploadPromises.push(accountApi.uploadDocument(documents.rgFront.file, 'RG_FRONT', token))
       }
       if (documents.rgBack.file) {
-        formData.append('rgBack', documents.rgBack.file)
+        uploadPromises.push(accountApi.uploadDocument(documents.rgBack.file, 'RG_BACK', token))
       }
       if (documents.selfie.file) {
-        formData.append('selfie', documents.selfie.file)
+        uploadPromises.push(accountApi.uploadDocument(documents.selfie.file, 'SELFIE', token))
       }
       if (documents.proofOfAddress.file) {
-        formData.append('proofOfAddress', documents.proofOfAddress.file)
+        uploadPromises.push(accountApi.uploadDocument(documents.proofOfAddress.file, 'PROOF_OF_ADDRESS', token))
       }
-      
+
       if (isPJ) {
         if (documents.socialContract.file) {
-          formData.append('socialContract', documents.socialContract.file)
+          uploadPromises.push(accountApi.uploadDocument(documents.socialContract.file, 'CONTRATO_SOCIAL', token))
         }
         if (documents.cnpjCard.file) {
-          formData.append('cnpjCard', documents.cnpjCard.file)
+          uploadPromises.push(accountApi.uploadDocument(documents.cnpjCard.file, 'CARTAO_CNPJ', token))
         }
       }
 
-      await accountApi.uploadDocuments(formData, token)
+      await Promise.all(uploadPromises)
 
       setSuccess(true)
       

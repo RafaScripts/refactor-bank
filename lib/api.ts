@@ -118,8 +118,12 @@ export const accountApi = {
   requestAccount: (data: AccountRequest, token: string) => 
     api.post<AccountResponse>('/v1/core/account/request', data, token),
   
-  uploadDocuments: (formData: FormData, token: string) => 
-    api.postFormData<DocumentResponse>('/v1/core/account/documents', formData, token),
+  uploadDocument: (file: File, documentType: string, token: string) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('documentType', documentType)
+    return api.postFormData<DocumentResponse>('/v1/core/account/documents', formData, token)
+  },
 }
 
 // Balance & Statement endpoints
