@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useAuthStore } from '@/lib/store'
+import { useAuth } from '@/lib/auth-context'
 import { cryptoApi, type WalletResponse } from '@/lib/api'
 import { formatCurrency, formatCrypto } from '@/lib/format'
 import { Bitcoin, Coins, ArrowUpDown, Send, TrendingUp, TrendingDown, Loader2, CheckCircle } from 'lucide-react'
@@ -25,9 +25,9 @@ const mockPrices = {
 }
 
 export default function CryptoPage() {
-  const { token, bankAccount } = useAuthStore()
+  const { token } = useAuth()
   const [wallets] = useState<WalletResponse[]>(mockWallets)
-  const balance = bankAccount?.balance || 0
+  const balance = 0
 
   // Buy states
   const [buyCurrency, setBuyCurrency] = useState<'BTC' | 'ETH'>('BTC')

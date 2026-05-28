@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuthStore } from '@/lib/store'
+import { useAuth } from '@/lib/auth-context'
 import { authApi, type SignupRequest } from '@/lib/api'
 import { validateCPF, validateCNPJ } from '@/lib/format'
 import { Button } from '@/components/ui/button'
@@ -24,7 +24,7 @@ const companyTypes = [
 
 export default function SignupPage() {
   const router = useRouter()
-  const { setAuth } = useAuthStore()
+  const { login } = useAuth()
   
   const [step, setStep] = useState(1)
   const [accountType, setAccountType] = useState<AccountType | null>(null)
@@ -185,14 +185,15 @@ export default function SignupPage() {
       // Auto-login after signup
       const loginResponse = await authApi.login(email, password)
       
-      setAuth(
-        loginResponse.user,
-        loginResponse.accessToken,
-        loginResponse.bankAccount ? {
-          ...loginResponse.bankAccount,
-          businessAccount: accountType === 'PJ',
-        } : null
-      )
+      login(loginResponse.accessToken, {
+        id: loginResponse.user.id,
+        name: loginResponse.user.name,
+        email: loginResponse.user.email,
+        doc: loginResponse.user.doc,
+        type: loginResponse.user.type,
+        status: loginResponse.user.status,
+        businessAccount: loginResponse.user.businessAccount || accountType === 'PJ',
+      })
       
       router.push('/dashboard')
     } catch (err) {

@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuthStore } from '@/lib/store'
+import { useAuth } from '@/lib/auth-context'
 import { Sidebar } from '@/components/dashboard/sidebar'
 
 export default function DashboardLayout({
@@ -11,31 +11,15 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const [hydrated, setHydrated] = useState(false)
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const { isAuthenticated, isLoading } = useAuth()
 
   useEffect(() => {
-    // Wait for Zustand to finish hydrating from localStorage
-    const checkHydration = () => {
-      if (useAuthStore.persist.hasHydrated()) {
-        setHydrated(true)
-      } else {
-        useAuthStore.persist.onFinishHydration(() => {
-          setHydrated(true)
-        })
-      }
-    }
-    checkHydration()
-  }, [])
-
-  useEffect(() => {
-    console.log('[v0] hydrated:', hydrated, 'isAuthenticated:', isAuthenticated)
-    if (hydrated && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       router.push('/login')
     }
-  }, [hydrated, isAuthenticated, router])
+  }, [isLoading, isAuthenticated, router])
 
-  if (!hydrated) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">

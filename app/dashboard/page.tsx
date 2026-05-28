@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuthStore } from '@/lib/store'
+import { useAuth } from '@/lib/auth-context'
 import { BalanceCard } from '@/components/dashboard/balance-card'
 import { QuickActions } from '@/components/dashboard/quick-actions'
 import { RecentTransactions } from '@/components/dashboard/recent-transactions'
@@ -75,9 +75,10 @@ const mockWallets: WalletResponse[] = [
 ]
 
 export default function DashboardPage() {
-  const { user, bankAccount } = useAuthStore()
+  const { user } = useAuth()
 
-  const needsOnboarding = !bankAccount || bankAccount.status !== 'APPROVED'
+  // For now, show the dashboard without bank account validation
+  const needsOnboarding = user?.status !== 'APPROVED'
 
   return (
     <div className="space-y-6">
@@ -101,12 +102,12 @@ export default function DashboardPage() {
             <div className="flex-1">
               <p className="font-medium text-foreground">Complete seu cadastro</p>
               <p className="text-sm text-muted-foreground">
-                {bankAccount?.status === 'PENDING_REVIEW'
+                {user?.status === 'PENDING_REVIEW'
                   ? 'Seus documentos estão em análise. Aguarde a aprovação.'
                   : 'Envie seus documentos para liberar todas as funcionalidades da conta.'}
               </p>
             </div>
-            {bankAccount?.status !== 'PENDING_REVIEW' && (
+            {user?.status !== 'PENDING_REVIEW' && (
               <Link href="/dashboard/onboarding">
                 <Button size="sm">Completar</Button>
               </Link>
@@ -117,7 +118,7 @@ export default function DashboardPage() {
 
       {/* Balance */}
       <BalanceCard 
-        available={bankAccount?.balance || 0} 
+        available={0} 
         pending={0}
         blocked={0}
       />

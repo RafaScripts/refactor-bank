@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuthStore } from '@/lib/store'
+import { useAuth } from '@/lib/auth-context'
 import { authApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +13,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { setAuth } = useAuthStore()
+  const { login } = useAuth()
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -29,14 +29,15 @@ export default function LoginPage() {
     try {
       const response = await authApi.login(email, password)
       
-      setAuth(
-        response.user,
-        response.accessToken,
-        response.bankAccount ? {
-          ...response.bankAccount,
-          businessAccount: false,
-        } : null
-      )
+      login(response.accessToken, {
+        id: response.user.id,
+        name: response.user.name,
+        email: response.user.email,
+        doc: response.user.doc,
+        type: response.user.type,
+        status: response.user.status,
+        businessAccount: response.user.businessAccount || false,
+      })
       
       router.push('/dashboard')
     } catch (err) {
