@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
-import { useAuth } from '@/lib/auth-context'
+import { useSession } from 'next-auth/react'
 import { creditsApi, type CreditProduct } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
 import { CreditCard, Calculator, CheckCircle, Loader2, AlertCircle, Info } from 'lucide-react'
@@ -46,7 +46,8 @@ const mockProducts: CreditProduct[] = [
 ]
 
 export default function CreditPage() {
-  const { token } = useAuth()
+  const { data: session } = useSession()
+  const token = session?.user?.accessToken
   const [products] = useState<CreditProduct[]>(mockProducts)
   const [selectedProduct, setSelectedProduct] = useState<CreditProduct | null>(null)
   const [amount, setAmount] = useState<number>(0)

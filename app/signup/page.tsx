@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { useAuth } from '@/lib/auth-context'
 import { authApi, type SignupRequest } from '@/lib/api'
 import { validateCPF, validateCNPJ } from '@/lib/format'
 import { Button } from '@/components/ui/button'
@@ -24,7 +24,6 @@ const companyTypes = [
 
 export default function SignupPage() {
   const router = useRouter()
-  const { login } = useAuth()
   
   const [step, setStep] = useState(1)
   const [accountType, setAccountType] = useState<AccountType | null>(null)
@@ -182,20 +181,20 @@ export default function SignupPage() {
 
       const response = await authApi.signup(signupData)
       
-      // Auto-login after signup
-      const loginResponse = await authApi.login(email, password)
-      
-      login(loginResponse.accessToken, {
-        id: loginResponse.user.id,
-        name: loginResponse.user.name,
-        email: loginResponse.user.email,
-        doc: loginResponse.user.doc,
-        type: loginResponse.user.type,
-        status: loginResponse.user.status,
-        businessAccount: loginResponse.user.businessAccount || accountType === 'PJ',
+      // Auto-login after signup using NextAuth
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
       })
       
-      router.push('/dashboard')
+      if (result?.ok) {
+        router.push('/dashboard')
+        router.refresh()
+      } else {
+        // Signup succeeded but auto-login failed, redirect to login
+        router.push('/login')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao criar conta. Tente novamente.')
     } finally {

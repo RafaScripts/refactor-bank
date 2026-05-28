@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/auth-context'
+import { useSession } from 'next-auth/react'
 import { accountApi, AccountRequest } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -58,7 +58,9 @@ const BRAZILIAN_STATES = [
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const { user, token } = useAuth()
+  const { data: session } = useSession()
+  const user = session?.user
+  const token = session?.user?.accessToken
   const [currentStep, setCurrentStep] = useState<Step>('address')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')

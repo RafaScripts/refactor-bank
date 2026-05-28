@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/lib/auth-context'
+import { useSession } from 'next-auth/react'
 import { BalanceCard } from '@/components/dashboard/balance-card'
 import { QuickActions } from '@/components/dashboard/quick-actions'
 import { RecentTransactions } from '@/components/dashboard/recent-transactions'
@@ -75,7 +75,8 @@ const mockWallets: WalletResponse[] = [
 ]
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { data: session } = useSession()
+  const user = session?.user
 
   // For now, show the dashboard without bank account validation
   const needsOnboarding = user?.status !== 'APPROVED'

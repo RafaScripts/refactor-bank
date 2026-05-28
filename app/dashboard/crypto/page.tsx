@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useAuth } from '@/lib/auth-context'
+import { useSession } from 'next-auth/react'
 import { cryptoApi, type WalletResponse } from '@/lib/api'
 import { formatCurrency, formatCrypto } from '@/lib/format'
 import { Bitcoin, Coins, ArrowUpDown, Send, TrendingUp, TrendingDown, Loader2, CheckCircle } from 'lucide-react'
@@ -25,7 +25,8 @@ const mockPrices = {
 }
 
 export default function CryptoPage() {
-  const { token } = useAuth()
+  const { data: session } = useSession()
+  const token = session?.user?.accessToken
   const [wallets] = useState<WalletResponse[]>(mockWallets)
   const balance = 0
 
