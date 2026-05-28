@@ -11,21 +11,32 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const { isAuthenticated, isLoading, setLoading } = useAuthStore()
-  const [mounted, setMounted] = useState(false)
+  const { isAuthenticated } = useAuthStore()
+  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
-    setLoading(false)
-  }, [setLoading])
+    // Wait for zustand to hydrate from localStorage
+    const unsubscribe = useAuthStore.persist.onFinishHydration(() => {
+      setHydrated(true)
+    })
+    
+    // Check if already hydrated
+    if (useAuthStore.persist.hasHydrated()) {
+      setHydrated(true)
+    }
+    
+    return () => {
+      unsubscribe()
+    }
+  }, [])
 
   useEffect(() => {
-    if (mounted && !isLoading && !isAuthenticated) {
+    if (hydrated && !isAuthenticated) {
       router.push('/login')
     }
-  }, [mounted, isLoading, isAuthenticated, router])
+  }, [hydrated, isAuthenticated, router])
 
-  if (!mounted || isLoading) {
+  if (!hydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
