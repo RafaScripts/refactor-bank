@@ -169,7 +169,7 @@ export default function SignupPage() {
         password,
         doc: accountType === 'PF' ? cpf.replace(/\D/g, '') : cnpj.replace(/\D/g, ''),
         type: accountType!,
-        withBankAccount: true,
+        withBankAccount: false,
         businessAccount: accountType === 'PJ',
       }
 
