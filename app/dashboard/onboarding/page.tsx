@@ -76,6 +76,8 @@ export default function OnboardingPage() {
     state: ''
   })
 
+  const [birthDate, setBirthDate] = useState('')
+
   const [documents, setDocuments] = useState<Documents>({
     rgFront: { file: null, preview: null },
     rgBack: { file: null, preview: null },
@@ -135,14 +137,18 @@ export default function OnboardingPage() {
   }
 
   const isAddressValid = () => {
-    return (
+    const baseValid =
       addressData.postalCode.replace(/\D/g, '').length === 8 &&
       addressData.address.trim() !== '' &&
       addressData.addressNumber.trim() !== '' &&
       addressData.province.trim() !== '' &&
       addressData.city.trim() !== '' &&
       addressData.state !== ''
-    )
+
+    if (isPJ) return baseValid
+
+    // PF requires birthDate
+    return baseValid && birthDate.trim() !== ''
   }
 
   const isDocumentsValid = () => {
@@ -190,6 +196,7 @@ export default function OnboardingPage() {
         name: user.name || undefined,
         email: user.email || undefined,
         doc: user.doc || undefined,
+        birthDate: isPJ ? undefined : birthDate,
         postalCode: addressData.postalCode.replace(/\D/g, ''),
         address: addressData.address,
         addressNumber: addressData.addressNumber,
@@ -331,6 +338,19 @@ export default function OnboardingPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {!isPJ && (
+                  <div className="space-y-2">
+                    <Label htmlFor="birthDate">Data de Nascimento</Label>
+                    <Input
+                      id="birthDate"
+                      type="date"
+                      value={birthDate}
+                      onChange={(e) => setBirthDate(e.target.value)}
+                      required={!isPJ}
+                    />
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="postalCode">CEP</Label>
