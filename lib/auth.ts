@@ -25,12 +25,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               password: credentials.password,
             }),
           })
-
+          
           if (!response.ok) {
             return null
           }
 
-          const data = await response.json()
+          const responseData = await response.json()
+          
+          // API returns { statusCode, message, data: { accessToken, user, bankAccount } }
+          const data = responseData.data || responseData
           
           if (!data.accessToken) {
             return null
@@ -42,7 +45,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: data.user?.name || '',
             email: data.user?.email || credentials.email as string,
             accessToken: data.accessToken,
-            doc: data.user?.doc || '',
+            doc: data.user?.cpfCnpj || data.user?.doc || '',
             type: data.user?.type || 'PF',
             status: data.user?.status || 'PENDING',
             businessAccount: data.user?.businessAccount || data.bankAccount?.businessAccount || false,
