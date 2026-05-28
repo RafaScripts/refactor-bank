@@ -2,9 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { useAuthStore } from '@/lib/store'
-import { authApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,7 +12,6 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { setAuth } = useAuthStore()
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -27,20 +25,20 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await authApi.login(email, password)
-      
-      setAuth(
-        response.user,
-        response.accessToken,
-        response.bankAccount ? {
-          ...response.bankAccount,
-          businessAccount: false,
-        } : null
-      )
-      
-      router.push('/dashboard')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Credenciais inválidas. Verifique seu e-mail e senha.')
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        setError('Credenciais inválidas. Verifique seu e-mail e senha.')
+      } else if (result?.ok) {
+        router.push('/dashboard')
+        router.refresh()
+      }
+    } catch {
+      setError('Ocorreu um erro ao fazer login. Tente novamente.')
     } finally {
       setIsLoading(false)
     }

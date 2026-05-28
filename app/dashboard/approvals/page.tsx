@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useAuthStore } from '@/lib/store'
+import { useSession } from 'next-auth/react'
 import { approvalsApi, type PendingApproval } from '@/lib/api'
 import { formatCurrency, formatDateTime } from '@/lib/format'
 import { Check, X, Clock, AlertCircle, Loader2, Users } from 'lucide-react'
@@ -54,7 +54,8 @@ const mockApprovals: PendingApproval[] = [
 ]
 
 export default function ApprovalsPage() {
-  const { token, bankAccount } = useAuthStore()
+  const { data: session } = useSession()
+  const token = session?.user?.accessToken
   const [approvals, setApprovals] = useState<PendingApproval[]>(mockApprovals)
   const [selectedApproval, setSelectedApproval] = useState<PendingApproval | null>(null)
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null)

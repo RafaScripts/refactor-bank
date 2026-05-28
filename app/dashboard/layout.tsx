@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuthStore } from '@/lib/store'
+import { useSession } from 'next-auth/react'
 import { Sidebar } from '@/components/dashboard/sidebar'
 
 export default function DashboardLayout({
@@ -11,21 +11,15 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const { isAuthenticated, isLoading, setLoading } = useAuthStore()
-  const [mounted, setMounted] = useState(false)
+  const { data: session, status } = useSession()
 
   useEffect(() => {
-    setMounted(true)
-    setLoading(false)
-  }, [setLoading])
-
-  useEffect(() => {
-    if (mounted && !isLoading && !isAuthenticated) {
+    if (status === 'unauthenticated') {
       router.push('/login')
     }
-  }, [mounted, isLoading, isAuthenticated, router])
+  }, [status, router])
 
-  if (!mounted || isLoading) {
+  if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -38,7 +32,7 @@ export default function DashboardLayout({
     )
   }
 
-  if (!isAuthenticated) {
+  if (!session) {
     return null
   }
 

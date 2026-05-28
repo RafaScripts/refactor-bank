@@ -1,9 +1,8 @@
 'use client'
 
-import { useAuthStore } from '@/lib/store'
-import { formatCurrency, formatAccountNumber } from '@/lib/format'
+import { formatCurrency } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
-import { Eye, EyeOff, Copy, Check, TrendingUp, TrendingDown } from 'lucide-react'
+import { Eye, EyeOff, TrendingUp, TrendingDown } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 
@@ -15,19 +14,7 @@ interface BalanceCardProps {
 }
 
 export function BalanceCard({ available, pending = 0, blocked = 0, showDetails = true }: BalanceCardProps) {
-  const { bankAccount } = useAuthStore()
   const [visible, setVisible] = useState(true)
-  const [copied, setCopied] = useState(false)
-
-  const total = available + pending
-
-  const copyAccountInfo = () => {
-    if (bankAccount) {
-      navigator.clipboard.writeText(`Ag: ${bankAccount.branch} Cc: ${bankAccount.accountNumber}`)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
 
   return (
     <Card className="bg-gradient-to-br from-primary/20 via-card to-card border-primary/20 overflow-hidden relative">
@@ -56,16 +43,10 @@ export function BalanceCard({ available, pending = 0, blocked = 0, showDetails =
               </Button>
             </div>
           </div>
-          
-          {bankAccount?.status === 'APPROVED' && (
-            <div className="px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium">
-              Conta Ativa
-            </div>
-          )}
         </div>
 
         {showDetails && (
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-2 gap-4">
             <div className="p-3 rounded-lg bg-background/50">
               <div className="flex items-center gap-2 text-muted-foreground mb-1">
                 <TrendingUp className="w-4 h-4 text-primary" />
@@ -84,29 +65,6 @@ export function BalanceCard({ available, pending = 0, blocked = 0, showDetails =
                 {visible ? formatCurrency(blocked) : 'R$ ••••'}
               </p>
             </div>
-          </div>
-        )}
-
-        {bankAccount && (
-          <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
-            <div>
-              <p className="text-xs text-muted-foreground mb-0.5">Dados da conta</p>
-              <p className="text-sm font-mono">
-                {formatAccountNumber(bankAccount.accountNumber, bankAccount.branch)}
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={copyAccountInfo}
-            >
-              {copied ? (
-                <Check className="w-4 h-4 text-primary" />
-              ) : (
-                <Copy className="w-4 h-4 text-muted-foreground" />
-              )}
-            </Button>
           </div>
         )}
       </CardContent>

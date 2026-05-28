@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useAuthStore } from '@/lib/store'
+import { useSession } from 'next-auth/react'
 import { paymentsApi } from '@/lib/api'
 import { formatCurrency, detectPixKeyType } from '@/lib/format'
 import { QrCode, Building, FileText, Loader2, CheckCircle, AlertCircle, Search } from 'lucide-react'
@@ -24,7 +24,8 @@ const banks = [
 ]
 
 export default function CashOutPage() {
-  const { token, bankAccount } = useAuthStore()
+  const { data: session } = useSession()
+  const token = session?.user?.accessToken
   
   // Pix states
   const [pixKey, setPixKey] = useState('')

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { useAuthStore } from '@/lib/store'
+import { useSession, signOut } from 'next-auth/react'
 import {
   LayoutDashboard,
   ArrowDownLeft,
@@ -35,10 +35,11 @@ const corporateNav = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { user, bankAccount, theme, logout } = useAuthStore()
+  const { data: session } = useSession()
   const [mobileOpen, setMobileOpen] = useState(false)
   
-  const isBusinessAccount = bankAccount?.businessAccount
+  const user = session?.user
+  const isBusinessAccount = user?.businessAccount
 
   const NavContent = () => (
     <>
@@ -48,9 +49,7 @@ export function Sidebar() {
           <span className="text-primary-foreground font-bold text-lg">R</span>
         </div>
         <div className="flex flex-col">
-          <span className="font-semibold text-foreground">
-            {theme?.partnerName || 'Refact Bank'}
-          </span>
+          <span className="font-semibold text-foreground">Refact Bank</span>
           <span className="text-xs text-muted-foreground">Conta Digital</span>
         </div>
       </div>
@@ -134,10 +133,7 @@ export function Sidebar() {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => {
-              logout()
-              window.location.href = '/login'
-            }}
+            onClick={() => signOut({ callbackUrl: '/login' })}
             className="text-destructive hover:text-destructive hover:bg-destructive/10"
           >
             <LogOut className="w-4 h-4" />
