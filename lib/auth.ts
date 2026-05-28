@@ -19,7 +19,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         try {
           const response = await fetch(`${API_BASE_URL}/v1/iam/auth/login`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'x-access-key': process.env.NEXT_PUBLIC_ACCESS_KEY || '',
+            },
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password,
@@ -50,6 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             status: data.user?.status || 'PENDING',
             businessAccount: data.user?.businessAccount || data.bankAccount?.businessAccount || false,
             bankAccount: data.bankAccount || null,
+            bankAccountId: data.bankAccount?._id || data.bankAccount?.id || null,
           }
         } catch (error) {
           console.error('Auth error:', error)
@@ -67,6 +71,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.status = user.status
         token.businessAccount = user.businessAccount
         token.bankAccount = user.bankAccount
+        token.bankAccountId = user.bankAccountId
       }
       return token
     },
@@ -85,6 +90,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           status: string
           balance: number
         } | null
+        session.user.bankAccountId = token.bankAccountId as string | null
       }
       return session
     },
@@ -113,6 +119,7 @@ declare module 'next-auth' {
       status: string
       balance: number
     } | null
+    bankAccountId: string | null
   }
   
   interface Session {
@@ -133,6 +140,7 @@ declare module 'next-auth' {
         status: string
         balance: number
       } | null
+      bankAccountId: string | null
     }
   }
 }
@@ -151,5 +159,6 @@ declare module 'next-auth/jwt' {
       status: string
       balance: number
     } | null
+    bankAccountId?: string | null
   }
 }

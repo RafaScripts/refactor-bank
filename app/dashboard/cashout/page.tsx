@@ -57,7 +57,7 @@ export default function CashOutPage() {
             bank.code.includes(bankSearch)
   )
 
-  const balance = bankAccount?.balance || 0
+  const balance = session?.user?.bankAccount?.balance || 0
 
   const handleSendPix = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,10 +71,8 @@ export default function CashOutPage() {
     
     setPixLoading(true)
     try {
-      const keyType = detectPixKeyType(pixKey)
       const result = await paymentsApi.sendPix({
-        key: pixKey,
-        keyType,
+        pixKey: pixKey,
         amount,
         description: pixDescription || undefined,
       }, token)

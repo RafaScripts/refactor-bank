@@ -230,9 +230,10 @@ export default function OnboardingPage() {
 
       setSuccess(true)
       
-      // Redirect to dashboard after success
+      // Redirect to dashboard after success with full page reload
+      // to force NextAuth session refresh with updated account status
       setTimeout(() => {
-        router.push('/dashboard')
+        window.location.href = '/dashboard'
       }, 3000)
 
     } catch (err) {

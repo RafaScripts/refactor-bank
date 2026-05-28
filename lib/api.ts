@@ -78,6 +78,19 @@ class ApiClient {
 
     return response.json()
   }
+
+  async delete<T>(endpoint: string, token?: string): Promise<T> {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(token),
+    })
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`)
+    }
+
+    return response.json()
+  }
 }
 
 export const api = new ApiClient()
@@ -169,16 +182,46 @@ export const creditsApi = {
     api.post<CreditResponse>('/v1/credits/request', data, token),
 }
 
+// Pix Keys endpoints
+export const pixKeysApi = {
+  listKeys: (token: string) => 
+    api.get<PixKey[]>('/v1/payments/pix/keys', token),
+  
+  createKey: (data: { type: string }, token: string) => 
+    api.post<PixKey>('/v1/payments/pix/keys', data, token),
+  
+  deleteKey: (id: string, token: string) => 
+    api.delete<void>(`/v1/payments/pix/keys/${id}`, token),
+}
+
+// Favorites endpoints
+export const favoritesApi = {
+  getFavorites: (token: string) => 
+    api.get<Favorite[]>('/v1/core/favorites', token),
+  
+  addFavorite: (data: FavoriteRequest, token: string) => 
+    api.post<Favorite>('/v1/core/favorites', data, token),
+  
+  removeFavorite: (id: string, token: string) => 
+    api.delete<void>(`/v1/core/favorites/${id}`, token),
+}
+
+// Wallet endpoints
+export const walletApi = {
+  createWallet: (token: string) => 
+    api.post<WalletResponse>('/v1/core/wallet', undefined, token),
+}
+
 // Approvals endpoints (PJ)
 export const approvalsApi = {
   getPending: (token: string) => 
-    api.get<PendingApproval[]>('/v1/core/approvals/pending', token),
+    api.get<PendingApproval[]>('/v1/corporate/approvals', token),
   
   approve: (id: string, token: string) => 
-    api.post<ApprovalResponse>(`/v1/core/approvals/${id}/approve`, undefined, token),
+    api.post<ApprovalResponse>(`/v1/corporate/approvals/${id}/vote`, { vote: 'APPROVED' }, token),
   
   reject: (id: string, token: string) => 
-    api.post<ApprovalResponse>(`/v1/core/approvals/${id}/reject`, undefined, token),
+    api.post<ApprovalResponse>(`/v1/corporate/approvals/${id}/vote`, { vote: 'REJECTED' }, token),
 }
 
 // Types
@@ -280,11 +323,11 @@ export interface DocumentResponse {
 }
 
 export interface BalanceResponse {
-  available: number
-  pending: number
-  blocked: number
-  total: number
-  currency: string
+  fiat: {
+    currency: string
+    balance: number  // em centavos
+  }
+  crypto: Record<string, string>
 }
 
 export interface StatementParams {
@@ -355,8 +398,7 @@ export interface BoletoChargeResponse {
 }
 
 export interface PixSendRequest {
-  key: string
-  keyType: 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP'
+  pixKey: string
   amount: number
   description?: string
 }
@@ -399,19 +441,21 @@ export interface QuoteResponse {
 }
 
 export interface CryptoBuyRequest {
-  currency: 'BTC' | 'ETH'
-  amountBRL: number
+  bankAccountId: string
+  symbol: 'BTC' | 'ETH'
+  amountBrl: number
 }
 
 export interface CryptoSellRequest {
-  currency: 'BTC' | 'ETH'
-  amount: number
+  bankAccountId: string
+  symbol: 'BTC' | 'ETH'
+  amountCrypto: number
 }
 
 export interface CryptoTransferRequest {
-  currency: 'BTC' | 'ETH'
+  receiverUserId: string
+  symbol: 'BTC' | 'ETH'
   amount: number
-  recipientEmail: string
 }
 
 export interface CryptoTransactionResponse {
@@ -433,6 +477,7 @@ export interface CreditProduct {
 }
 
 export interface CreditRequest {
+  bankAccountId: string
   productId: string
   amount: number
   installments: number
@@ -460,4 +505,35 @@ export interface PendingApproval {
 export interface ApprovalResponse {
   id: string
   status: 'APPROVED' | 'REJECTED' | 'PENDING'
+}
+
+export interface PixKey {
+  id: string
+  key: string
+  type: 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP'
+  status: 'ACTIVE' | 'PENDING' | 'INACTIVE'
+  createdAt: string
+}
+
+export interface Favorite {
+  id: string
+  name: string
+  doc: string
+  bankName?: string
+  bankCode?: string
+  branch?: string
+  accountNumber?: string
+  pixKey?: string
+  type: 'PIX' | 'TED'
+}
+
+export interface FavoriteRequest {
+  name: string
+  doc: string
+  bankName?: string
+  bankCode?: string
+  branch?: string
+  accountNumber?: string
+  pixKey?: string
+  type: 'PIX' | 'TED'
 }

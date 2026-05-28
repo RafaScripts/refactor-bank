@@ -1,34 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useSession } from 'next-auth/react'
-import { cryptoApi, type WalletResponse } from '@/lib/api'
+import { cryptoApi, balanceApi, type WalletResponse } from '@/lib/api'
 import { formatCurrency, formatCrypto } from '@/lib/format'
 import { Bitcoin, Coins, ArrowUpDown, Send, TrendingUp, TrendingDown, Loader2, CheckCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// Mock wallet data
-const mockWallets: WalletResponse[] = [
-  { currency: 'Bitcoin', symbol: 'BTC', balance: 0.00125, balanceBRL: 625 },
-  { currency: 'Ethereum', symbol: 'ETH', balance: 0.05, balanceBRL: 450 },
-]
-
-// Mock price data
-const mockPrices = {
-  BTC: { price: 500000, change: 2.5 },
-  ETH: { price: 9000, change: -1.2 },
-}
-
 export default function CryptoPage() {
   const { data: session } = useSession()
   const token = session?.user?.accessToken
-  const [wallets] = useState<WalletResponse[]>(mockWallets)
-  const balance = 0
+  const bankAccountId = session?.user?.bankAccountId
+  const [wallets, setWallets] = useState<WalletResponse[]>([])
+  const [prices, setPrices] = useState<Record<string, { price: number; change: number }>>({})
+  const [fiatBalance, setFiatBalance] = useState(0)
+  const [loading, setLoading] = useState(true)
 
   // Buy states
   const [buyCurrency, setBuyCurrency] = useState<'BTC' | 'ETH'>('BTC')
@@ -51,15 +43,66 @@ export default function CryptoPage() {
 
   const selectedWallet = wallets.find(w => w.symbol === sellCurrency) || wallets[0]
 
+  // Fetch real wallet balances and prices
+  useEffect(() => {
+    if (!token) return
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const [walletData, balanceData] = await Promise.all([
+          balanceApi.getWallets(token),
+          balanceApi.getBalance(token),
+        ])
+        setFiatBalance((balanceData.fiat?.balance || 0) / 100)
+
+        const cryptoWallets: WalletResponse[] = []
+        if (walletData.balances) {
+          const balances = walletData.balances instanceof Map
+            ? Object.fromEntries(walletData.balances)
+            : walletData.balances
+          for (const [symbol, balance] of Object.entries(balances)) {
+            if (symbol !== 'BRL') {
+              cryptoWallets.push({
+                currency: symbol === 'BTC' ? 'Bitcoin' : symbol === 'ETH' ? 'Ethereum' : symbol,
+                symbol,
+                balance: parseFloat(balance as string),
+                balanceBRL: 0,
+              })
+            }
+          }
+        }
+        setWallets(cryptoWallets)
+
+        // Fetch prices for BTC and ETH
+        const priceData: Record<string, { price: number; change: number }> = {}
+        for (const symbol of ['BTC', 'ETH']) {
+          try {
+            const quote = await cryptoApi.getQuote({ symbol: symbol as 'BTC' | 'ETH' }, token)
+            priceData[symbol] = { price: quote.priceBrl || quote.price || 0, change: 0 }
+          } catch {
+            priceData[symbol] = { price: symbol === 'BTC' ? 500000 : 9000, change: 0 }
+          }
+        }
+        setPrices(priceData)
+      } catch (err) {
+        console.error('Erro ao carregar crypto:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [token])
+
   const handleBuy = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!token) return
-    
+    if (!token || !bankAccountId) return
+
     setBuyLoading(true)
     try {
       const result = await cryptoApi.buy({
-        currency: buyCurrency,
-        amountBRL: parseFloat(buyAmountBRL),
+        bankAccountId,
+        symbol: buyCurrency,
+        amountBrl: parseFloat(buyAmountBRL),
       }, token)
       setBuyResult({ success: true, amount: result.amount })
     } catch (error) {
@@ -71,15 +114,16 @@ export default function CryptoPage() {
 
   const handleSell = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!token) return
-    
+    if (!token || !bankAccountId) return
+
     setSellLoading(true)
     try {
       const result = await cryptoApi.sell({
-        currency: sellCurrency,
-        amount: parseFloat(sellAmount),
+        bankAccountId,
+        symbol: sellCurrency,
+        amountCrypto: parseFloat(sellAmount),
       }, token)
-      setSellResult({ success: true, amountBRL: parseFloat(sellAmount) * mockPrices[sellCurrency].price })
+      setSellResult({ success: true, amountBRL: result.amount })
     } catch (error) {
       setSellResult({ success: false })
     } finally {
@@ -90,13 +134,15 @@ export default function CryptoPage() {
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!token) return
-    
+
     setTransferLoading(true)
     try {
+      // Note: backend expects receiverUserId, not email
+      // For now we use email as a placeholder - backend needs lookup endpoint
       await cryptoApi.transfer({
-        currency: transferCurrency,
+        receiverUserId: transferEmail,
+        symbol: transferCurrency,
         amount: parseFloat(transferAmount),
-        recipientEmail: transferEmail,
       }, token)
       setTransferResult({ success: true })
     } catch (error) {
@@ -106,11 +152,15 @@ export default function CryptoPage() {
     }
   }
 
-  const estimatedCrypto = buyAmountBRL 
-    ? parseFloat(buyAmountBRL) / mockPrices[buyCurrency].price 
+  const currentPrice = prices[buyCurrency]?.price || (buyCurrency === 'BTC' ? 500000 : 9000)
+  const estimatedCrypto = buyAmountBRL
+    ? parseFloat(buyAmountBRL) / currentPrice
     : 0
 
-  const totalCryptoValue = wallets.reduce((sum, w) => sum + w.balanceBRL, 0)
+  const totalCryptoValue = wallets.reduce((sum, w) => {
+    const price = prices[w.symbol]?.price || 0
+    return sum + (w.balance * price)
+  }, 0)
 
   return (
     <div className="space-y-6">
@@ -128,8 +178,14 @@ export default function CryptoPage() {
           </CardContent>
         </Card>
         
-        {wallets.map((wallet) => {
-          const priceData = mockPrices[wallet.symbol as keyof typeof mockPrices]
+        {loading ? (
+          <>
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+          </>
+        ) : wallets.map((wallet) => {
+          const priceData = prices[wallet.symbol] || { price: 0, change: 0 }
+          const balanceBRL = wallet.balance * priceData.price
           return (
             <Card key={wallet.symbol}>
               <CardContent className="p-4">
@@ -151,7 +207,7 @@ export default function CryptoPage() {
                   </span>
                 </div>
                 <p className="text-lg font-bold">{formatCrypto(wallet.balance, wallet.symbol)}</p>
-                <p className="text-sm text-muted-foreground">{formatCurrency(wallet.balanceBRL)}</p>
+                <p className="text-sm text-muted-foreground">{formatCurrency(balanceBRL)}</p>
               </CardContent>
             </Card>
           )
@@ -160,7 +216,12 @@ export default function CryptoPage() {
 
       {/* Price Cards */}
       <div className="grid sm:grid-cols-2 gap-4">
-        {Object.entries(mockPrices).map(([symbol, data]) => (
+        {loading ? (
+          <>
+            <Skeleton className="h-20" />
+            <Skeleton className="h-20" />
+          </>
+        ) : Object.entries(prices).map(([symbol, data]) => (
           <Card key={symbol} className="bg-accent/30">
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -239,7 +300,7 @@ export default function CryptoPage() {
                 <form onSubmit={handleBuy} className="space-y-4">
                   <div className="p-3 rounded-lg bg-accent/50 text-sm">
                     <span className="text-muted-foreground">Saldo disponível: </span>
-                    <span className="font-medium">{formatCurrency(balance)}</span>
+                    <span className="font-medium">{formatCurrency(fiatBalance)}</span>
                   </div>
                   
                   <div className="space-y-2">
@@ -283,7 +344,7 @@ export default function CryptoPage() {
                       type="number"
                       step="0.01"
                       min="10"
-                      max={balance}
+                      max={fiatBalance}
                       value={buyAmountBRL}
                       onChange={(e) => setBuyAmountBRL(e.target.value)}
                       placeholder="0,00"
@@ -393,7 +454,7 @@ export default function CryptoPage() {
                     />
                     {sellAmount && (
                       <p className="text-sm text-muted-foreground">
-                        Você receberá aproximadamente {formatCurrency(parseFloat(sellAmount) * mockPrices[sellCurrency].price)}
+                        Você receberá aproximadamente {formatCurrency(parseFloat(sellAmount) * (prices[sellCurrency]?.price || 0))}
                       </p>
                     )}
                   </div>

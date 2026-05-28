@@ -1,85 +1,100 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { BalanceCard } from '@/components/dashboard/balance-card'
 import { QuickActions } from '@/components/dashboard/quick-actions'
 import { RecentTransactions } from '@/components/dashboard/recent-transactions'
 import { CryptoWallets } from '@/components/dashboard/crypto-wallets'
 import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import type { Transaction, WalletResponse } from '@/lib/api'
+import { balanceApi, type Transaction, type WalletResponse } from '@/lib/api'
 
-// Mock data for demonstration
-const mockTransactions: Transaction[] = [
-  {
-    id: '1',
-    type: 'CASH_IN',
-    method: 'PIX',
-    amount: 1500.00,
-    description: 'Transferência recebida',
-    counterparty: 'João Silva',
-    date: new Date().toISOString(),
-    status: 'COMPLETED',
-    transactionCode: 'TXN001',
-  },
-  {
-    id: '2',
-    type: 'CASH_OUT',
-    method: 'PIX',
-    amount: 250.00,
-    description: 'Pagamento de conta',
-    counterparty: 'Empresa XYZ',
-    date: new Date(Date.now() - 86400000).toISOString(),
-    status: 'COMPLETED',
-    transactionCode: 'TXN002',
-  },
-  {
-    id: '3',
-    type: 'CASH_IN',
-    method: 'TED',
-    amount: 5000.00,
-    description: 'Salário',
-    counterparty: 'Empresa ABC',
-    date: new Date(Date.now() - 172800000).toISOString(),
-    status: 'COMPLETED',
-    transactionCode: 'TXN003',
-  },
-  {
-    id: '4',
-    type: 'CASH_OUT',
-    method: 'BOLETO',
-    amount: 890.50,
-    description: 'Conta de luz',
-    counterparty: 'ENEL',
-    date: new Date(Date.now() - 259200000).toISOString(),
-    status: 'PENDING',
-    transactionCode: 'TXN004',
-  },
-]
-
-const mockWallets: WalletResponse[] = [
-  {
-    currency: 'Bitcoin',
-    symbol: 'BTC',
-    balance: 0.00125,
-    balanceBRL: 625.00,
-  },
-  {
-    currency: 'Ethereum',
-    symbol: 'ETH',
-    balance: 0.05,
-    balanceBRL: 450.00,
-  },
-]
+interface DashboardBalance {
+  available: number
+  pending: number
+  blocked: number
+  total: number
+  currency: string
+}
 
 export default function DashboardPage() {
   const { data: session } = useSession()
   const user = session?.user
+  const token = user?.accessToken
 
-  // For now, show the dashboard without bank account validation
+  const [balance, setBalance] = useState<DashboardBalance | null>(null)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [wallets, setWallets] = useState<WalletResponse[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
   const needsOnboarding = user?.status !== 'APPROVED'
+
+  useEffect(() => {
+    if (!token) return
+
+    const fetchData = async () => {
+      setLoading(true)
+      setError('')
+      try {
+        const [balanceData, statementData, walletsData] = await Promise.all([
+          balanceApi.getBalance(token),
+          balanceApi.getStatement(token, { limit: '5' }),
+          balanceApi.getWallets(token),
+        ])
+        // Balance: backend returns { fiat: { currency, balance (cents) }, crypto: {} }
+        setBalance({
+          available: (balanceData.fiat?.balance || 0) / 100,
+          pending: 0,
+          blocked: 0,
+          total: (balanceData.fiat?.balance || 0) / 100,
+          currency: balanceData.fiat?.currency || 'BRL',
+        })
+        // Statement: backend returns { data: [], meta: { total, page, lastPage } }
+        const mappedTransactions: Transaction[] = (statementData.data || []).map((item: any) => ({
+          id: item._id || item.id,
+          type: item.type || 'CASH_IN',
+          method: item.method || 'PIX',
+          amount: (item.amount || 0) / 100,
+          description: item.description || '',
+          counterparty: item.counterpartyName || item.counterparty || '',
+          date: item.createdAt || item.date,
+          status: item.status || 'COMPLETED',
+          transactionCode: item.externalId || item.transactionCode || '',
+        }))
+        setTransactions(mappedTransactions)
+        // Wallet: backend returns { owner, balances: Map }
+        const cryptoWallets: WalletResponse[] = []
+        if (walletsData.balances) {
+          const balances = walletsData.balances instanceof Map 
+            ? Object.fromEntries(walletsData.balances) 
+            : walletsData.balances
+          for (const [symbol, balance] of Object.entries(balances)) {
+            if (symbol !== 'BRL' && parseFloat(balance as string) > 0) {
+              cryptoWallets.push({
+                currency: symbol === 'BTC' ? 'Bitcoin' : symbol === 'ETH' ? 'Ethereum' : symbol,
+                symbol,
+                balance: parseFloat(balance as string),
+                balanceBRL: 0, // Will be calculated with quote
+              })
+            }
+          }
+        }
+        setWallets(cryptoWallets)
+      } catch (err) {
+        console.error('Erro ao carregar dashboard:', err)
+        setError('Não foi possível carregar os dados. Tente novamente.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [token])
 
   return (
     <div className="space-y-6">
@@ -118,11 +133,15 @@ export default function DashboardPage() {
       )}
 
       {/* Balance */}
-      <BalanceCard 
-        available={0} 
-        pending={0}
-        blocked={0}
-      />
+      {loading ? (
+        <Skeleton className="h-40 w-full" />
+      ) : (
+        <BalanceCard
+          available={balance?.available || 0}
+          pending={balance?.pending || 0}
+          blocked={balance?.blocked || 0}
+        />
+      )}
 
       {/* Quick Actions */}
       <QuickActions />
@@ -130,10 +149,18 @@ export default function DashboardPage() {
       {/* Content Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <RecentTransactions transactions={mockTransactions} />
+          {loading ? (
+            <Skeleton className="h-80 w-full" />
+          ) : (
+            <RecentTransactions transactions={transactions} />
+          )}
         </div>
         <div>
-          <CryptoWallets wallets={mockWallets} />
+          {loading ? (
+            <Skeleton className="h-80 w-full" />
+          ) : (
+            <CryptoWallets wallets={wallets} />
+          )}
         </div>
       </div>
     </div>

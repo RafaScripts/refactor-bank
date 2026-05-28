@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useSession } from 'next-auth/react'
 import { approvalsApi, type PendingApproval } from '@/lib/api'
 import { formatCurrency, formatDateTime } from '@/lib/format'
@@ -19,47 +20,42 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-// Mock data
-const mockApprovals: PendingApproval[] = [
-  {
-    id: '1',
-    type: 'PIX',
-    amount: 15000,
-    destination: 'João da Silva - CPF: ***.***.789-00',
-    createdBy: 'Carlos Operador',
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-    votesRequired: 2,
-    votesReceived: 1,
-  },
-  {
-    id: '2',
-    type: 'TED',
-    amount: 50000,
-    destination: 'Empresa ABC LTDA - Banco do Brasil Ag: 1234 Cc: 56789-0',
-    createdBy: 'Ana Financeiro',
-    createdAt: new Date(Date.now() - 7200000).toISOString(),
-    votesRequired: 2,
-    votesReceived: 0,
-  },
-  {
-    id: '3',
-    type: 'BOLETO',
-    amount: 8500,
-    destination: 'Conta de energia - CPFL',
-    createdBy: 'Carlos Operador',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    votesRequired: 2,
-    votesReceived: 1,
-  },
-]
-
 export default function ApprovalsPage() {
   const { data: session } = useSession()
   const token = session?.user?.accessToken
-  const [approvals, setApprovals] = useState<PendingApproval[]>(mockApprovals)
+  const [approvals, setApprovals] = useState<PendingApproval[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedApproval, setSelectedApproval] = useState<PendingApproval | null>(null)
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (!token) return
+    const fetchApprovals = async () => {
+      setLoading(true)
+      try {
+        const data = await approvalsApi.getPending(token)
+        // Map backend response to frontend type
+        const mapped: PendingApproval[] = (data || []).map((item: any) => ({
+          id: item._id || item.id,
+          type: item.transaction?.method || item.type || 'PIX',
+          amount: (item.transaction?.amount || item.amount || 0) / 100,
+          destination: item.transaction?.counterpartyName || item.destination || '',
+          createdBy: item.requestedBy?.name || item.createdBy || '',
+          createdAt: item.createdAt,
+          votesRequired: item.requiredVotes || 1,
+          votesReceived: (item.votes || []).filter((v: any) => v.vote === 'APPROVED').length,
+        }))
+        setApprovals(mapped)
+      } catch (err) {
+        console.error('Erro ao carregar aprovações:', err)
+        setApprovals([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchApprovals()
+  }, [token])
 
   const handleAction = async (approval: PendingApproval, action: 'approve' | 'reject') => {
     setSelectedApproval(approval)
@@ -99,7 +95,7 @@ export default function ApprovalsPage() {
   const totalPending = approvals.reduce((sum, a) => sum + a.amount, 0)
 
   // Check if user is admin (in a real app, this would come from the user's roles)
-  const isAdmin = bankAccount?.businessAccount
+  const isAdmin = session?.user?.businessAccount
 
   if (!isAdmin) {
     return (
@@ -171,7 +167,13 @@ export default function ApprovalsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {approvals.length === 0 ? (
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-32 w-full" />
+              ))}
+            </div>
+          ) : approvals.length === 0 ? (
             <div className="p-8 text-center">
               <Check className="w-12 h-12 mx-auto mb-4 text-primary" />
               <p className="text-lg font-medium text-foreground mb-2">Nenhuma pendência</p>
@@ -258,7 +260,7 @@ export default function ApprovalsPage() {
       <Card className="bg-accent/30">
         <CardContent className="p-6">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
               <AlertCircle className="w-5 h-5 text-primary" />
             </div>
             <div>

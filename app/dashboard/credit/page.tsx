@@ -1,58 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useSession } from 'next-auth/react'
 import { creditsApi, type CreditProduct } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
 import { CreditCard, Calculator, CheckCircle, Loader2, AlertCircle, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// Mock credit products
-const mockProducts: CreditProduct[] = [
-  {
-    id: '1',
-    name: 'Crédito Pessoal',
-    type: 'PERSONAL',
-    minAmount: 1000,
-    maxAmount: 50000,
-    minInstallments: 3,
-    maxInstallments: 24,
-    interestRate: 2.49,
-  },
-  {
-    id: '2',
-    name: 'Microcrédito PJ',
-    type: 'MICROCREDIT',
-    minAmount: 5000,
-    maxAmount: 100000,
-    minInstallments: 6,
-    maxInstallments: 36,
-    interestRate: 1.99,
-  },
-  {
-    id: '3',
-    name: 'Capital de Giro',
-    type: 'BUSINESS',
-    minAmount: 10000,
-    maxAmount: 500000,
-    minInstallments: 12,
-    maxInstallments: 48,
-    interestRate: 1.79,
-  },
-]
-
 export default function CreditPage() {
   const { data: session } = useSession()
   const token = session?.user?.accessToken
-  const [products] = useState<CreditProduct[]>(mockProducts)
+  const bankAccountId = session?.user?.bankAccountId
+  const [products, setProducts] = useState<CreditProduct[]>([])
   const [selectedProduct, setSelectedProduct] = useState<CreditProduct | null>(null)
   const [amount, setAmount] = useState<number>(0)
   const [installments, setInstallments] = useState<number>(12)
   const [isLoading, setIsLoading] = useState(false)
+  const [loadingProducts, setLoadingProducts] = useState(true)
   const [result, setResult] = useState<{
     success: boolean
     installmentValue?: number
@@ -60,7 +29,24 @@ export default function CreditPage() {
     cet?: number
   } | null>(null)
 
-  const isBusinessAccount = bankAccount?.businessAccount
+  const isBusinessAccount = session?.user?.businessAccount
+
+  useEffect(() => {
+    if (!token) return
+    const fetchProducts = async () => {
+      setLoadingProducts(true)
+      try {
+        const data = await creditsApi.getProducts(token)
+        setProducts(data || [])
+      } catch (err) {
+        console.error('Erro ao carregar produtos:', err)
+        setProducts([])
+      } finally {
+        setLoadingProducts(false)
+      }
+    }
+    fetchProducts()
+  }, [token])
 
   const handleSelectProduct = (product: CreditProduct) => {
     setSelectedProduct(product)
@@ -87,11 +73,12 @@ export default function CreditPage() {
   }
 
   const handleSimulate = async () => {
-    if (!token || !selectedProduct) return
+    if (!token || !selectedProduct || !bankAccountId) return
     
     setIsLoading(true)
     try {
       const response = await creditsApi.requestCredit({
+        bankAccountId,
         productId: selectedProduct.id,
         amount,
         installments,
@@ -122,7 +109,13 @@ export default function CreditPage() {
         <p className="text-muted-foreground">Simule e solicite empréstimos</p>
       </div>
 
-      {availableProducts.length === 0 ? (
+      {loadingProducts ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <Skeleton key={i} className="h-64" />
+          ))}
+        </div>
+      ) : availableProducts.length === 0 ? (
         <Card className="bg-accent/30">
           <CardContent className="p-8 text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -327,7 +320,7 @@ export default function CreditPage() {
             <Card className="bg-accent/30">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <Info className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                  <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div className="text-sm">
                     <p className="font-medium text-foreground mb-1">Informações importantes</p>
                     <ul className="text-muted-foreground space-y-1">

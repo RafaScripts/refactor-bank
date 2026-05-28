@@ -1,14 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatDateTime } from '@/lib/format'
-import { ArrowDownLeft, ArrowUpRight, Filter, Download, Search, X } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Filter, Download, Search, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Transaction } from '@/lib/api'
+import { balanceApi, type Transaction } from '@/lib/api'
 import {
   Dialog,
   DialogContent,
@@ -16,87 +18,61 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
-// Mock data
-const mockTransactions: Transaction[] = [
-  {
-    id: '1',
-    type: 'CASH_IN',
-    method: 'PIX',
-    amount: 1500.00,
-    description: 'Transferência recebida',
-    counterparty: 'João Silva',
-    date: new Date().toISOString(),
-    status: 'COMPLETED',
-    transactionCode: 'TXN001234567890',
-  },
-  {
-    id: '2',
-    type: 'CASH_OUT',
-    method: 'PIX',
-    amount: 250.00,
-    description: 'Pagamento de conta',
-    counterparty: 'Empresa XYZ Ltda',
-    date: new Date(Date.now() - 86400000).toISOString(),
-    status: 'COMPLETED',
-    transactionCode: 'TXN001234567891',
-  },
-  {
-    id: '3',
-    type: 'CASH_IN',
-    method: 'TED',
-    amount: 5000.00,
-    description: 'Salário',
-    counterparty: 'Empresa ABC S.A.',
-    date: new Date(Date.now() - 172800000).toISOString(),
-    status: 'COMPLETED',
-    transactionCode: 'TXN001234567892',
-  },
-  {
-    id: '4',
-    type: 'CASH_OUT',
-    method: 'BOLETO',
-    amount: 890.50,
-    description: 'Conta de luz',
-    counterparty: 'ENEL SP',
-    date: new Date(Date.now() - 259200000).toISOString(),
-    status: 'COMPLETED',
-    transactionCode: 'TXN001234567893',
-  },
-  {
-    id: '5',
-    type: 'CASH_OUT',
-    method: 'TED',
-    amount: 2500.00,
-    description: 'Transferência',
-    counterparty: 'Maria Santos',
-    date: new Date(Date.now() - 345600000).toISOString(),
-    status: 'COMPLETED',
-    transactionCode: 'TXN001234567894',
-  },
-  {
-    id: '6',
-    type: 'CASH_IN',
-    method: 'PIX',
-    amount: 320.00,
-    description: 'Reembolso',
-    counterparty: 'Pedro Oliveira',
-    date: new Date(Date.now() - 432000000).toISOString(),
-    status: 'COMPLETED',
-    transactionCode: 'TXN001234567895',
-  },
-]
-
 export default function StatementPage() {
-  const [transactions] = useState<Transaction[]>(mockTransactions)
+  const { data: session } = useSession()
+  const token = session?.user?.accessToken
+
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
+
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [showFilters, setShowFilters] = useState(false)
-  
+
   // Filter states
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'CASH_IN' | 'CASH_OUT'>('ALL')
   const [methodFilter, setMethodFilter] = useState<'ALL' | 'PIX' | 'TED' | 'BOLETO'>('ALL')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+
+  const fetchStatement = useCallback(async () => {
+    if (!token) return
+    setLoading(true)
+    try {
+      const params: Record<string, string> = { page: String(page), limit: '20' }
+      if (typeFilter !== 'ALL') params.type = typeFilter
+      if (methodFilter !== 'ALL') params.method = methodFilter
+      if (startDate) params.startDate = startDate
+      if (endDate) params.endDate = endDate
+
+      const response = await balanceApi.getStatement(token, params)
+      const mapped: Transaction[] = (response.data || []).map((item: any) => ({
+        id: item._id || item.id,
+        type: item.type || 'CASH_IN',
+        method: item.method || 'PIX',
+        amount: (item.amount || 0) / 100,
+        description: item.description || '',
+        counterparty: item.counterpartyName || item.counterparty || '',
+        date: item.createdAt || item.date,
+        status: item.status || 'COMPLETED',
+        transactionCode: item.externalId || item.transactionCode || '',
+      }))
+      setTransactions(mapped)
+      setTotal(response.meta?.total || 0)
+      setTotalPages(response.meta?.lastPage || 1)
+    } catch (err) {
+      console.error('Erro ao carregar extrato:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [token, page, typeFilter, methodFilter, startDate, endDate])
+
+  useEffect(() => {
+    fetchStatement()
+  }, [fetchStatement])
 
   const filteredTransactions = transactions.filter((t) => {
     if (typeFilter !== 'ALL' && t.type !== typeFilter) return false
@@ -277,63 +253,95 @@ export default function StatementPage() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg">
-            Movimentações ({filteredTransactions.length})
+            Movimentações ({loading ? '...' : total})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {filteredTransactions.length === 0 ? (
+          {loading ? (
+            <div className="p-8 space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : filteredTransactions.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <p>Nenhuma transação encontrada</p>
             </div>
           ) : (
-            <div className="divide-y divide-border">
-              {filteredTransactions.map((transaction) => (
-                <button
-                  key={transaction.id}
-                  onClick={() => setSelectedTransaction(transaction)}
-                  className="w-full flex items-center gap-4 p-4 hover:bg-accent/50 transition-colors text-left"
-                >
-                  <div
-                    className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
-                      transaction.type === 'CASH_IN'
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-orange-500/10 text-orange-500'
-                    )}
+            <>
+              <div className="divide-y divide-border">
+                {filteredTransactions.map((transaction) => (
+                  <button
+                    key={transaction.id}
+                    onClick={() => setSelectedTransaction(transaction)}
+                    className="w-full flex items-center gap-4 p-4 hover:bg-accent/50 transition-colors text-left"
                   >
-                    {transaction.type === 'CASH_IN' ? (
-                      <ArrowDownLeft className="w-5 h-5" />
-                    ) : (
-                      <ArrowUpRight className="w-5 h-5" />
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate text-foreground">
-                      {transaction.description}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {transaction.counterparty} • {transaction.method}
-                    </p>
-                  </div>
-                  
-                  <div className="text-right">
-                    <p
+                    <div
                       className={cn(
-                        'font-semibold text-sm',
-                        transaction.type === 'CASH_IN' ? 'text-primary' : 'text-foreground'
+                        'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
+                        transaction.type === 'CASH_IN'
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-orange-500/10 text-orange-500'
                       )}
                     >
-                      {transaction.type === 'CASH_IN' ? '+' : '-'}
-                      {formatCurrency(transaction.amount)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDateTime(transaction.date)}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
+                      {transaction.type === 'CASH_IN' ? (
+                        <ArrowDownLeft className="w-5 h-5" />
+                      ) : (
+                        <ArrowUpRight className="w-5 h-5" />
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate text-foreground">
+                        {transaction.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {transaction.counterparty} • {transaction.method}
+                      </p>
+                    </div>
+                    
+                    <div className="text-right">
+                      <p
+                        className={cn(
+                          'font-semibold text-sm',
+                          transaction.type === 'CASH_IN' ? 'text-primary' : 'text-foreground'
+                        )}
+                      >
+                        {transaction.type === 'CASH_IN' ? '+' : '-'}
+                        {formatCurrency(transaction.amount)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDateTime(transaction.date)}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between p-4 border-t border-border">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Página {page} de {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                  >
+                    Próxima <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
