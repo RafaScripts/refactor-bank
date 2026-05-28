@@ -11,26 +11,25 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const { isAuthenticated } = useAuthStore()
   const [hydrated, setHydrated] = useState(false)
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
   useEffect(() => {
-    // Wait for zustand to hydrate from localStorage
-    const unsubscribe = useAuthStore.persist.onFinishHydration(() => {
-      setHydrated(true)
-    })
-    
-    // Check if already hydrated
-    if (useAuthStore.persist.hasHydrated()) {
-      setHydrated(true)
+    // Wait for Zustand to finish hydrating from localStorage
+    const checkHydration = () => {
+      if (useAuthStore.persist.hasHydrated()) {
+        setHydrated(true)
+      } else {
+        useAuthStore.persist.onFinishHydration(() => {
+          setHydrated(true)
+        })
+      }
     }
-    
-    return () => {
-      unsubscribe()
-    }
+    checkHydration()
   }, [])
 
   useEffect(() => {
+    console.log('[v0] hydrated:', hydrated, 'isAuthenticated:', isAuthenticated)
     if (hydrated && !isAuthenticated) {
       router.push('/login')
     }
