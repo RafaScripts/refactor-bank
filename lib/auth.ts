@@ -145,20 +145,4 @@ declare module 'next-auth' {
   }
 }
 
-declare module 'next-auth/jwt' {
-  interface JWT {
-    accessToken?: string
-    doc?: string
-    type?: 'PF' | 'PJ'
-    status?: string
-    businessAccount?: boolean
-    bankAccount?: {
-      externalId: string
-      accountNumber: string
-      branch: string
-      status: string
-      balance: number
-    } | null
-    bankAccountId?: string | null
-  }
-}
+

@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { balanceApi, type Transaction, type WalletResponse } from '@/lib/api'
+import { balanceApi, type Transaction, type WalletListResponse } from '@/lib/api'
 
 interface DashboardBalance {
   available: number
@@ -28,7 +28,7 @@ export default function DashboardPage() {
 
   const [balance, setBalance] = useState<DashboardBalance | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [wallets, setWallets] = useState<WalletResponse[]>([])
+  const [wallets, setWallets] = useState<{ currency: string; symbol: string; balance: number; balanceBRL: number }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -68,7 +68,7 @@ export default function DashboardPage() {
         }))
         setTransactions(mappedTransactions)
         // Wallet: backend returns { owner, balances: Map }
-        const cryptoWallets: WalletResponse[] = []
+        const cryptoWallets: { currency: string; symbol: string; balance: number; balanceBRL: number }[] = []
         if (walletsData.balances) {
           const balances = walletsData.balances instanceof Map 
             ? Object.fromEntries(walletsData.balances) 

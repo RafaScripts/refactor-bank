@@ -187,9 +187,9 @@ export default function OnboardingPage() {
       // 1. Create account request
       const accountData: AccountRequest = {
         type: user.type as 'PF' | 'PJ',
-        name: user.name,
-        email: user.email,
-        doc: user.doc,
+        name: user.name || undefined,
+        email: user.email || undefined,
+        doc: user.doc || undefined,
         postalCode: addressData.postalCode.replace(/\D/g, ''),
         address: addressData.address,
         addressNumber: addressData.addressNumber,

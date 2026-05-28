@@ -135,7 +135,7 @@ export const balanceApi = {
   },
   
   getWallets: (token: string) => 
-    api.get<WalletResponse[]>('/v1/core/wallet', token),
+    api.get<WalletListResponse>('/v1/core/wallet', token),
 }
 
 // Payments endpoints
@@ -352,12 +352,12 @@ export interface Transaction {
 }
 
 export interface StatementResponse {
-  transactions: Transaction[]
-  pagination: {
+  data: Transaction[]
+  meta: {
     page: number
     limit: number
     total: number
-    totalPages: number
+    lastPage: number
   }
 }
 
@@ -366,6 +366,11 @@ export interface WalletResponse {
   symbol: string
   balance: number
   balanceBRL: number
+}
+
+export interface WalletListResponse {
+  owner: string
+  balances: Record<string, string> | Map<string, string>
 }
 
 export interface PixChargeRequest {
@@ -426,14 +431,14 @@ export interface TransactionResponse {
 }
 
 export interface QuoteRequest {
-  currency: 'BTC' | 'ETH'
+  symbol: 'BTC' | 'ETH'
   amount?: number
   amountBRL?: number
 }
 
 export interface QuoteResponse {
-  currency: string
-  price: number
+  symbol: string
+  priceBrl: number
   amount: number
   amountBRL: number
   fee: number

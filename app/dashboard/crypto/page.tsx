@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useSession } from 'next-auth/react'
-import { cryptoApi, balanceApi, type WalletResponse } from '@/lib/api'
+import { cryptoApi, balanceApi, type WalletListResponse } from '@/lib/api'
 import { formatCurrency, formatCrypto } from '@/lib/format'
 import { Bitcoin, Coins, ArrowUpDown, Send, TrendingUp, TrendingDown, Loader2, CheckCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -17,7 +17,7 @@ export default function CryptoPage() {
   const { data: session } = useSession()
   const token = session?.user?.accessToken
   const bankAccountId = session?.user?.bankAccountId
-  const [wallets, setWallets] = useState<WalletResponse[]>([])
+  const [wallets, setWallets] = useState<{ currency: string; symbol: string; balance: number; balanceBRL: number }[]>([])
   const [prices, setPrices] = useState<Record<string, { price: number; change: number }>>({})
   const [fiatBalance, setFiatBalance] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -55,7 +55,7 @@ export default function CryptoPage() {
         ])
         setFiatBalance((balanceData.fiat?.balance || 0) / 100)
 
-        const cryptoWallets: WalletResponse[] = []
+        const cryptoWallets: { currency: string; symbol: string; balance: number; balanceBRL: number }[] = []
         if (walletData.balances) {
           const balances = walletData.balances instanceof Map
             ? Object.fromEntries(walletData.balances)
@@ -78,7 +78,7 @@ export default function CryptoPage() {
         for (const symbol of ['BTC', 'ETH']) {
           try {
             const quote = await cryptoApi.getQuote({ symbol: symbol as 'BTC' | 'ETH' }, token)
-            priceData[symbol] = { price: quote.priceBrl || quote.price || 0, change: 0 }
+            priceData[symbol] = { price: quote.priceBrl || 0, change: 0 }
           } catch {
             priceData[symbol] = { price: symbol === 'BTC' ? 500000 : 9000, change: 0 }
           }
