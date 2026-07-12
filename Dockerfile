@@ -9,6 +9,9 @@ WORKDIR /app
 # Enable corepack for pnpm
 RUN corepack enable pnpm
 
+# Avoid pnpm v10+ failing on ignored build scripts during CI builds
+ENV PNPM_CONFIG_STRICT_DEP_BUILDS=false
+
 # Install dependencies
 COPY package.json pnpm-lock.yaml* ./
 RUN pnpm i --frozen-lockfile
