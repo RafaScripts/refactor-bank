@@ -20,6 +20,8 @@ import {
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 
+import { BankSelector } from '@/components/dashboard/bank-selector'
+
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Receber', href: '/dashboard/cashin', icon: ArrowDownLeft },
@@ -40,6 +42,7 @@ export function Sidebar() {
   
   const user = session?.user
   const isBusinessAccount = user?.businessAccount
+  const isAdmin = user?.permissions?.admin || user?.permissions?.superuser || user?.permissions?.masterFinancial
 
   const NavContent = () => (
     <>
@@ -53,6 +56,9 @@ export function Sidebar() {
           <span className="text-xs text-muted-foreground">Conta Digital</span>
         </div>
       </div>
+
+      {/* Bank Selector */}
+      <BankSelector />
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
@@ -104,6 +110,30 @@ export function Sidebar() {
             })}
           </>
         )}
+      
+        {isAdmin && (
+          <>
+            <div className="pt-4 pb-2">
+              <span className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Administração
+              </span>
+            </div>
+            <Link
+              href="/dashboard/admin"
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                pathname === '/dashboard/admin'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              )}
+            >
+              <Users className="w-5 h-5" />
+              Painel Admin
+            </Link>
+          </>
+        )}
+
       </nav>
 
       {/* User Section */}

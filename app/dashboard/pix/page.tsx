@@ -43,7 +43,12 @@ export default function PixPage() {
       setLoadingKeys(true)
       try {
         const data = await pixKeysApi.listKeys(token)
-        setPixKeys(data || [])
+        if (Array.isArray(data)) {
+          setPixKeys(data)
+        } else {
+          setPixKeys([])
+          console.warn('listKeys returned non-array:', data)
+        }
       } catch (err) {
         console.error('Erro ao carregar chaves:', err)
       } finally {
@@ -102,7 +107,11 @@ export default function PixPage() {
     try {
       await pixKeysApi.createKey({ type: newKeyType }, token)
       const data = await pixKeysApi.listKeys(token)
-      setPixKeys(data || [])
+      if (Array.isArray(data)) {
+        setPixKeys(data)
+      } else {
+        setPixKeys([])
+      }
       setShowAddKey(false)
     } catch (err) {
       console.error('Erro ao criar chave:', err)

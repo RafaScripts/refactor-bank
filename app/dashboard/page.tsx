@@ -55,16 +55,17 @@ export default function DashboardPage() {
           currency: balanceData.fiat?.currency || 'BRL',
         })
         // Statement: backend returns { data: [], meta: { total, page, lastPage } }
-        const mappedTransactions: Transaction[] = (statementData.data || []).map((item: any) => ({
+        const statementArray = statementData.data || []
+        const mappedTransactions: Transaction[] = statementArray.map((item: any) => ({
           id: item._id || item.id,
-          type: item.type || 'CASH_IN',
-          method: item.method || 'PIX',
+          type: item.transaction?.type || item.type || 'CASH_IN',
+          method: item.transaction?.method || item.method || 'PIX',
           amount: (item.amount || 0) / 100,
           description: item.description || '',
           counterparty: item.counterpartyName || item.counterparty || '',
           date: item.createdAt || item.date,
-          status: item.status || 'COMPLETED',
-          transactionCode: item.externalId || item.transactionCode || '',
+          status: item.transaction?.status || item.status || 'APPROVED',
+          transactionCode: item.transaction?.externalId || item.externalId || item.transactionCode || '',
         }))
         setTransactions(mappedTransactions)
         // Wallet: backend returns { owner, balances: Map }

@@ -75,14 +75,14 @@ export function RecentTransactions({ transactions, limit = 5 }: RecentTransactio
                   <p
                     className={cn(
                       'text-xs',
-                      transaction.status === 'COMPLETED'
+                      transaction.status === 'APPROVED'
                         ? 'text-muted-foreground'
                         : transaction.status === 'PENDING'
                         ? 'text-warning'
                         : 'text-destructive'
                     )}
                   >
-                    {transaction.status === 'COMPLETED'
+                    {transaction.status === 'APPROVED'
                       ? 'Concluída'
                       : transaction.status === 'PENDING'
                       ? 'Pendente'

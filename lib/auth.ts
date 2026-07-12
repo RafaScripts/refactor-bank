@@ -59,6 +59,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             businessAccount: data.user?.businessAccount || false,
             bankAccountId: data.bankAccount?._id || data.bankAccount?.id || null,
             bankAccountStatus: data.bankAccount?.status || 'PENDING',
+            permissions: data.user?.permissions || null,
           }
           console.log('[AUTH] Returning user (minimal):', JSON.stringify(user, null, 2))
           return user
@@ -70,7 +71,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user, trigger, session }) {
       console.log('[JWT CALLBACK] trigger:', trigger, 'hasUser:', !!user, 'token.sub:', token.sub)
       if (user) {
         token.accessToken = user.accessToken
@@ -80,7 +81,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.businessAccount = user.businessAccount
         token.bankAccountId = user.bankAccountId
         token.bankAccountStatus = user.bankAccountStatus
+        token.permissions = user.permissions
         console.log('[JWT CALLBACK] Token updated with user data')
+      }
+      
+      if (trigger === 'update' && session) {
+        if (session.bankAccountId !== undefined) {
+          token.bankAccountId = session.bankAccountId
+        }
+        if (session.bankAccountStatus !== undefined) {
+          token.bankAccountStatus = session.bankAccountStatus
+        }
+        if (session.businessAccount !== undefined) {
+          token.businessAccount = session.businessAccount
+        }
       }
       return token
     },
@@ -95,6 +109,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.businessAccount = token.businessAccount as boolean
         session.user.bankAccountId = token.bankAccountId as string | null
         session.user.bankAccountStatus = token.bankAccountStatus as string
+        session.user.permissions = token.permissions as any
       }
       return session
     },
@@ -104,17 +119,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: {
     strategy: 'jwt',
-  },
-  cookies: {
-    sessionToken: {
-      name: `__Secure-authjs.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: true,
-      },
-    },
   },
   trustHost: true,
 })
@@ -129,6 +133,7 @@ declare module 'next-auth' {
     businessAccount: boolean
     bankAccountId: string | null
     bankAccountStatus: string
+    permissions: any
   }
   
   interface Session {
@@ -144,6 +149,7 @@ declare module 'next-auth' {
       businessAccount: boolean
       bankAccountId: string | null
       bankAccountStatus: string
+      permissions: any
     }
   }
 }

@@ -6,8 +6,8 @@ class ApiClient {
 
   constructor() {
     this.baseUrl = API_BASE_URL
-    this.accessKey = typeof window !== 'undefined' 
-      ? process.env.NEXT_PUBLIC_ACCESS_KEY || null 
+    this.accessKey = typeof window !== 'undefined'
+      ? process.env.NEXT_PUBLIC_ACCESS_KEY || null
       : null
   }
 
@@ -37,7 +37,11 @@ class ApiClient {
       throw new Error(`API Error: ${response.status}`)
     }
 
-    return response.json()
+    const json = await response.json()
+    if (json.data !== undefined && json.meta !== undefined) {
+      return { data: json.data, meta: json.meta } as T
+    }
+    return json.data !== undefined ? json.data : json
   }
 
   async post<T>(endpoint: string, data?: unknown, token?: string): Promise<T> {
@@ -52,12 +56,13 @@ class ApiClient {
       throw new Error(error.message || `API Error: ${response.status}`)
     }
 
-    return response.json()
+    const json = await response.json()
+    return json.data !== undefined ? json.data : json
   }
 
   async postFormData<T>(endpoint: string, formData: FormData, token?: string): Promise<T> {
     const headers: HeadersInit = {}
-    
+
     if (this.accessKey) {
       headers['x-access-key'] = this.accessKey
     }
@@ -73,10 +78,27 @@ class ApiClient {
     })
 
     if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || `API Error: ${response.status}`)
+    }
+
+    const json = await response.json()
+    return json.data !== undefined ? json.data : json
+  }
+
+  async put<T>(endpoint: string, data?: unknown, token?: string): Promise<T> {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'PUT',
+      headers: this.getHeaders(token),
+      body: data ? JSON.stringify(data) : undefined,
+    })
+
+    if (!response.ok) {
       throw new Error(`API Error: ${response.status}`)
     }
 
-    return response.json()
+    const json = await response.json()
+    return json.data !== undefined ? json.data : json
   }
 
   async delete<T>(endpoint: string, token?: string): Promise<T> {
@@ -89,7 +111,8 @@ class ApiClient {
       throw new Error(`API Error: ${response.status}`)
     }
 
-    return response.json()
+    const json = await response.json().catch(() => ({}))
+    return json.data !== undefined ? json.data : json
   }
 }
 
@@ -97,27 +120,42 @@ export const api = new ApiClient()
 
 // Auth endpoints
 export const authApi = {
-  login: (email: string, password: string) => 
+  login: (email: string, password: string) =>
     api.post<LoginResponse>('/v1/iam/auth/login', { email, password }),
-  
-  signup: (data: SignupRequest) => 
+
+  signup: (data: SignupRequest) =>
     api.post<SignupResponse>('/v1/iam/users/signup', data),
+}
+
+export const usersApi = {
+  getMe: (token: string) =>
+    api.get<any>('/v1/iam/users/me', token),
+
+  selectBank: (bankAccountId: string, token: string) =>
+    api.put<any>('/v1/iam/users/me/bank', { bankAccountId }, token),
 }
 
 // Tenant endpoints
 export const tenantApi = {
-  getTheme: (integrationKey: string) => 
+  getTheme: (integrationKey: string) =>
     api.get<ThemeResponse>(`/v1/iam/tenant/${integrationKey}`),
 }
 
 // Account endpoints
 export const accountApi = {
-  getStatus: (token: string) => 
+  getStatus: (token: string) =>
     api.get<AccountStatus>('/v1/core/account/status', token),
-  
-  requestAccount: (data: AccountRequest, token: string) => 
+
+  requestAccount: (data: AccountRequest, token: string) =>
     api.post<AccountResponse>('/v1/core/account/request', data, token),
+
   
+  getPendingAccounts: (token: string) => 
+    api.get<any[]>('/v1/core/account/pending', token),
+
+  approveAccount: (id: string, token: string) => 
+    api.post<any>(`/v1/core/account/approve/${id}`, undefined, token),
+
   uploadDocument: (file: File, documentType: string, token: string) => {
     const formData = new FormData()
     formData.append('file', file)
@@ -128,103 +166,103 @@ export const accountApi = {
 
 // Balance & Statement endpoints
 export const balanceApi = {
-  getBalance: (token: string) => 
+  getBalance: (token: string) =>
     api.get<BalanceResponse>('/v1/core/balance', token),
-  
+
   getStatement: (token: string, params?: StatementParams) => {
-    const query = params 
-      ? `?${new URLSearchParams(params as Record<string, string>).toString()}` 
+    const query = params
+      ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
       : ''
     return api.get<StatementResponse>(`/v1/core/statement${query}`, token)
   },
-  
-  getWallets: (token: string) => 
+
+  getWallets: (token: string) =>
     api.get<WalletListResponse>('/v1/core/wallet', token),
 }
 
 // Payments endpoints
 export const paymentsApi = {
   // Cash In
-  createPixCharge: (data: PixChargeRequest, token: string) => 
+  createPixCharge: (data: PixChargeRequest, token: string) =>
     api.post<PixChargeResponse>('/v1/payments/cashin/pix', data, token),
-  
-  createBoletoCharge: (data: BoletoChargeRequest, token: string) => 
+
+  createBoletoCharge: (data: BoletoChargeRequest, token: string) =>
     api.post<BoletoChargeResponse>('/v1/payments/cashin/boleto', data, token),
-  
+
   // Cash Out
-  sendPix: (data: PixSendRequest, token: string) => 
+  sendPix: (data: PixSendRequest, token: string) =>
     api.post<TransactionResponse>('/v1/payments/cashout/pix', data, token),
-  
-  sendTransfer: (data: TransferRequest, token: string) => 
+
+  sendTransfer: (data: TransferRequest, token: string) =>
     api.post<TransactionResponse>('/v1/payments/cashout/transfer', data, token),
-  
-  payBoleto: (data: BoletoPayRequest, token: string) => 
+
+  payBoleto: (data: BoletoPayRequest, token: string) =>
     api.post<TransactionResponse>('/v1/payments/cashout/boleto', data, token),
 }
 
 // Crypto endpoints
 export const cryptoApi = {
-  getQuote: (data: QuoteRequest, token: string) => 
+  getQuote: (data: QuoteRequest, token: string) =>
     api.post<QuoteResponse>('/v1/crypto/quote', data, token),
-  
-  buy: (data: CryptoBuyRequest, token: string) => 
+
+  buy: (data: CryptoBuyRequest, token: string) =>
     api.post<CryptoTransactionResponse>('/v1/crypto/buy', data, token),
-  
-  sell: (data: CryptoSellRequest, token: string) => 
+
+  sell: (data: CryptoSellRequest, token: string) =>
     api.post<CryptoTransactionResponse>('/v1/crypto/sell', data, token),
-  
-  transfer: (data: CryptoTransferRequest, token: string) => 
+
+  transfer: (data: CryptoTransferRequest, token: string) =>
     api.post<CryptoTransactionResponse>('/v1/crypto/transfer', data, token),
 }
 
 // Credits endpoints
 export const creditsApi = {
-  getProducts: (token: string) => 
+  getProducts: (token: string) =>
     api.get<CreditProduct[]>('/v1/credits/products', token),
-  
-  requestCredit: (data: CreditRequest, token: string) => 
+
+  requestCredit: (data: CreditRequest, token: string) =>
     api.post<CreditResponse>('/v1/credits/request', data, token),
 }
 
 // Pix Keys endpoints
 export const pixKeysApi = {
-  listKeys: (token: string) => 
+  listKeys: (token: string) =>
     api.get<PixKey[]>('/v1/payments/pix/keys', token),
-  
-  createKey: (data: { type: string }, token: string) => 
+
+  createKey: (data: { type: string }, token: string) =>
     api.post<PixKey>('/v1/payments/pix/keys', data, token),
-  
-  deleteKey: (id: string, token: string) => 
+
+  deleteKey: (id: string, token: string) =>
     api.delete<void>(`/v1/payments/pix/keys/${id}`, token),
 }
 
 // Favorites endpoints
 export const favoritesApi = {
-  getFavorites: (token: string) => 
+  getFavorites: (token: string) =>
     api.get<Favorite[]>('/v1/core/favorites', token),
-  
-  addFavorite: (data: FavoriteRequest, token: string) => 
+
+  addFavorite: (data: FavoriteRequest, token: string) =>
     api.post<Favorite>('/v1/core/favorites', data, token),
-  
-  removeFavorite: (id: string, token: string) => 
+
+  removeFavorite: (id: string, token: string) =>
     api.delete<void>(`/v1/core/favorites/${id}`, token),
 }
 
 // Wallet endpoints
 export const walletApi = {
-  createWallet: (token: string) => 
+  createWallet: (token: string) =>
     api.post<WalletResponse>('/v1/core/wallet', undefined, token),
 }
 
 // Approvals endpoints (PJ)
 export const approvalsApi = {
-  getPending: (token: string) => 
+  getPending: (token: string) =>
     api.get<PendingApproval[]>('/v1/corporate/approvals', token),
-  
-  approve: (id: string, token: string) => 
+
+  approve: (id: string, token: string) =>
     api.post<ApprovalResponse>(`/v1/corporate/approvals/${id}/vote`, { vote: 'APPROVED' }, token),
-  
-  reject: (id: string, token: string) => 
+
+  reject: (id: string, token: string) =>
     api.post<ApprovalResponse>(`/v1/corporate/approvals/${id}/vote`, { vote: 'REJECTED' }, token),
 }
 
@@ -289,6 +327,8 @@ export interface AccountRequest {
   name?: string
   email?: string
   doc?: string
+  pixKey: string
+  birthDate?: string
   mobilePhone?: string
   incomeValue?: number
   companyName?: string
@@ -301,13 +341,13 @@ export interface AccountRequest {
     doc: string
     mobilePhone: string
   }
-  postalCode: string
-  address: string
-  addressNumber: string
+  postalCode?: string
+  address?: string
+  addressNumber?: string
   complement?: string
-  province: string
-  city: string
-  state: string
+  province?: string
+  city?: string
+  state?: string
 }
 
 export interface AccountResponse {
@@ -351,7 +391,7 @@ export interface Transaction {
   description: string
   counterparty: string
   date: string
-  status: 'COMPLETED' | 'PENDING' | 'FAILED'
+  status: 'APPROVED' | 'PENDING' | 'FAILED'
   transactionCode: string
 }
 

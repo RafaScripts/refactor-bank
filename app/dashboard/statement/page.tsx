@@ -51,14 +51,14 @@ export default function StatementPage() {
       const response = await balanceApi.getStatement(token, params)
       const mapped: Transaction[] = (response.data || []).map((item: any) => ({
         id: item._id || item.id,
-        type: item.type || 'CASH_IN',
-        method: item.method || 'PIX',
+        type: item.transaction?.type || item.type || 'CASH_IN',
+        method: item.transaction?.method || item.method || 'PIX',
         amount: (item.amount || 0) / 100,
         description: item.description || '',
         counterparty: item.counterpartyName || item.counterparty || '',
         date: item.createdAt || item.date,
-        status: item.status || 'COMPLETED',
-        transactionCode: item.externalId || item.transactionCode || '',
+        status: item.transaction?.status || item.status || 'APPROVED',
+        transactionCode: item.transaction?.externalId || item.externalId || item.transactionCode || '',
       }))
       setTransactions(mapped)
       setTotal(response.meta?.total || 0)
@@ -78,7 +78,7 @@ export default function StatementPage() {
     if (typeFilter !== 'ALL' && t.type !== typeFilter) return false
     if (methodFilter !== 'ALL' && t.method !== methodFilter) return false
     if (searchTerm && !t.description.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !t.counterparty.toLowerCase().includes(searchTerm.toLowerCase())) return false
+      !t.counterparty.toLowerCase().includes(searchTerm.toLowerCase())) return false
     if (startDate && new Date(t.date) < new Date(startDate)) return false
     if (endDate && new Date(t.date) > new Date(endDate + 'T23:59:59')) return false
     return true
@@ -87,7 +87,7 @@ export default function StatementPage() {
   const totalIn = filteredTransactions
     .filter(t => t.type === 'CASH_IN')
     .reduce((sum, t) => sum + t.amount, 0)
-  
+
   const totalOut = filteredTransactions
     .filter(t => t.type === 'CASH_OUT')
     .reduce((sum, t) => sum + t.amount, 0)
@@ -176,7 +176,7 @@ export default function StatementPage() {
                 className="pl-9"
               />
             </div>
-            <Button 
+            <Button
               variant={showFilters ? "secondary" : "outline"}
               onClick={() => setShowFilters(!showFilters)}
             >
@@ -290,7 +290,7 @@ export default function StatementPage() {
                         <ArrowUpRight className="w-5 h-5" />
                       )}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate text-foreground">
                         {transaction.description}
@@ -299,7 +299,7 @@ export default function StatementPage() {
                         {transaction.counterparty} • {transaction.method}
                       </p>
                     </div>
-                    
+
                     <div className="text-right">
                       <p
                         className={cn(
@@ -369,7 +369,7 @@ export default function StatementPage() {
                   {selectedTransaction.type === 'CASH_IN' ? 'Recebido' : 'Enviado'}
                 </p>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Descrição</span>
@@ -393,9 +393,9 @@ export default function StatementPage() {
                   <span className="text-muted-foreground">Status</span>
                   <span className={cn(
                     "font-medium",
-                    selectedTransaction.status === 'COMPLETED' ? 'text-primary' : 'text-warning'
+                    selectedTransaction.status === 'APPROVED' ? 'text-primary' : 'text-warning'
                   )}>
-                    {selectedTransaction.status === 'COMPLETED' ? 'Concluída' : 'Pendente'}
+                    {selectedTransaction.status === 'APPROVED' ? 'Concluída' : 'Pendente'}
                   </span>
                 </div>
                 <div className="flex justify-between py-2">
