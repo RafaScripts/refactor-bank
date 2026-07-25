@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { PdfExportButton } from '@/components/ui/pdf-export-button'
 
 export default function StatementPage() {
   const { data: session } = useSession()
@@ -102,6 +103,46 @@ export default function StatementPage() {
 
   const hasActiveFilters = searchTerm || typeFilter !== 'ALL' || methodFilter !== 'ALL' || startDate || endDate
 
+  // Build HTML string for the full statement PDF export
+  const buildStatementHtml = () => {
+    const rows = filteredTransactions.map(t => `
+      <tr>
+        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${formatDateTime(t.date)}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${t.description}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #ddd;">${t.counterparty}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right; color: ${t.type === 'CASH_IN' ? 'green' : 'red'};">
+          ${t.type === 'CASH_IN' ? '+' : '-'}${formatCurrency(t.amount)}
+        </td>
+      </tr>
+    `).join('')
+
+    return `
+      <div style="font-family: sans-serif; padding: 20px; color: #333;">
+        <h2 style="margin-bottom: 5px;">Extrato da Conta</h2>
+        <p style="margin-top: 0; color: #666; font-size: 14px;">Resumo das movimentações financeiras</p>
+        <hr style="margin-bottom: 20px; border: 0; border-top: 1px solid #eee;" />
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px;">
+          <div><strong>Entradas:</strong> ${formatCurrency(totalIn)}</div>
+          <div><strong>Saídas:</strong> ${formatCurrency(totalOut)}</div>
+          <div><strong>Saldo Período:</strong> ${formatCurrency(totalIn - totalOut)}</div>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+          <thead>
+            <tr style="background-color: #f9fafb;">
+              <th style="padding: 10px 8px; border-bottom: 2px solid #ddd;">Data</th>
+              <th style="padding: 10px 8px; border-bottom: 2px solid #ddd;">Descrição</th>
+              <th style="padding: 10px 8px; border-bottom: 2px solid #ddd;">Favorecido/Origem</th>
+              <th style="padding: 10px 8px; border-bottom: 2px solid #ddd; text-align: right;">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      </div>
+    `
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -109,10 +150,13 @@ export default function StatementPage() {
           <h1 className="text-2xl font-bold text-foreground">Extrato</h1>
           <p className="text-muted-foreground">Histórico de movimentações da sua conta</p>
         </div>
-        <Button variant="outline" size="sm">
-          <Download className="w-4 h-4 mr-2" />
-          Exportar
-        </Button>
+        <PdfExportButton 
+          htmlContent={buildStatementHtml()} 
+          filename={`extrato-${new Date().toISOString().split('T')[0]}.pdf`} 
+          buttonText="Exportar"
+          variant="outline"
+          size="sm"
+        />
       </div>
 
       {/* Summary Cards */}
@@ -354,23 +398,24 @@ export default function StatementPage() {
           </DialogHeader>
           {selectedTransaction && (
             <div className="space-y-4">
-              <div className={cn(
-                "p-4 rounded-lg text-center",
-                selectedTransaction.type === 'CASH_IN' ? 'bg-primary/10' : 'bg-orange-500/10'
-              )}>
-                <p className={cn(
-                  "text-2xl font-bold",
-                  selectedTransaction.type === 'CASH_IN' ? 'text-primary' : 'text-orange-500'
+              <div id="receipt-content" className="bg-background p-4 rounded-lg">
+                <div className={cn(
+                  "p-4 rounded-lg text-center mb-4",
+                  selectedTransaction.type === 'CASH_IN' ? 'bg-primary/10' : 'bg-orange-500/10'
                 )}>
-                  {selectedTransaction.type === 'CASH_IN' ? '+' : '-'}
-                  {formatCurrency(selectedTransaction.amount)}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedTransaction.type === 'CASH_IN' ? 'Recebido' : 'Enviado'}
-                </p>
-              </div>
+                  <p className={cn(
+                    "text-2xl font-bold",
+                    selectedTransaction.type === 'CASH_IN' ? 'text-primary' : 'text-orange-500'
+                  )}>
+                    {selectedTransaction.type === 'CASH_IN' ? '+' : '-'}
+                    {formatCurrency(selectedTransaction.amount)}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {selectedTransaction.type === 'CASH_IN' ? 'Recebido' : 'Enviado'}
+                  </p>
+                </div>
 
-              <div className="space-y-3">
+                <div className="space-y-3">
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Descrição</span>
                   <span className="font-medium">{selectedTransaction.description}</span>
@@ -404,10 +449,13 @@ export default function StatementPage() {
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full">
-                <Download className="w-4 h-4 mr-2" />
-                Baixar comprovante
-              </Button>
+              <PdfExportButton 
+                targetId="receipt-content" 
+                filename={`comprovante-${selectedTransaction.transactionCode || 'transacao'}.pdf`}
+                buttonText="Baixar comprovante"
+                variant="outline"
+                className="w-full"
+              />
             </div>
           )}
         </DialogContent>
