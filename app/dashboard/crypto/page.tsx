@@ -25,7 +25,7 @@ export default function CryptoPage() {
 
   // Buy states
   const [buyCurrency, setBuyCurrency] = useState<'BTC' | 'ETH'>('BTC')
-  const [buyAmountBRL, setBuyAmountBRL] = useState<number | string>(\'\')
+  const [buyAmountBRL, setBuyAmountBRL] = useState<number | string>('')
   const [buyLoading, setBuyLoading] = useState(false)
   const [buyResult, setBuyResult] = useState<{ success: boolean; amount?: number } | null>(null)
 

@@ -13,6 +13,10 @@ import {
   CreditCard,
   Users,
   Settings,
+  Shield,
+  Building2,
+  Activity,
+  Database,
   LogOut,
   Menu,
   X,
@@ -128,8 +132,60 @@ export function Sidebar() {
                   : 'text-muted-foreground hover:text-foreground hover:bg-accent'
               )}
             >
+              <Shield className="w-5 h-5" />
+              Painel Geral
+            </Link>
+            <Link
+              href="/dashboard/admin/users"
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                pathname === '/dashboard/admin/users'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              )}
+            >
               <Users className="w-5 h-5" />
-              Painel Admin
+              Usuários
+            </Link>
+            <Link
+              href="/dashboard/admin/accounts"
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                pathname === '/dashboard/admin/accounts'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              )}
+            >
+              <Building2 className="w-5 h-5" />
+              Contas
+            </Link>
+            <Link
+              href="/dashboard/admin/statements"
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                pathname === '/dashboard/admin/statements'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              )}
+            >
+              <Activity className="w-5 h-5" />
+              Movimentações
+            </Link>
+            <Link
+              href="/dashboard/admin/virtual-accounts"
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                pathname === '/dashboard/admin/virtual-accounts'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              )}
+            >
+              <Database className="w-5 h-5" />
+              Contas Virtuais
             </Link>
           </>
         )}
