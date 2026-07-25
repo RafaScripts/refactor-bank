@@ -32,6 +32,12 @@ export default function CashInPage() {
   const [boletoDueDate, setBoletoDueDate] = useState('')
   const [boletoPayerName, setBoletoPayerName] = useState('')
   const [boletoPayerDoc, setBoletoPayerDoc] = useState('')
+  const [boletoStreet, setBoletoStreet] = useState('')
+  const [boletoNumber, setBoletoNumber] = useState('')
+  const [boletoNeighborhood, setBoletoNeighborhood] = useState('')
+  const [boletoCity, setBoletoCity] = useState('')
+  const [boletoState, setBoletoState] = useState('')
+  const [boletoZipCode, setBoletoZipCode] = useState('')
   const [boletoLoading, setBoletoLoading] = useState(false)
   const [boletoResult, setBoletoResult] = useState<{
     digitableLine: string
@@ -47,7 +53,7 @@ export default function CashInPage() {
     setPixLoading(true)
     try {
       const result = await paymentsApi.createPixCharge({
-        amount: parseFloat(pixAmount),
+        amount: Math.round(parseFloat(pixAmount) * 100),
         description: pixDescription || undefined,
       }, token)
       setPixResult(result)
@@ -65,11 +71,19 @@ export default function CashInPage() {
     setBoletoLoading(true)
     try {
       const result = await paymentsApi.createBoletoCharge({
-        amount: parseFloat(boletoAmount),
+        amount: Math.round(parseFloat(boletoAmount) * 100),
         dueDate: boletoDueDate,
         payer: {
           name: boletoPayerName,
           doc: boletoPayerDoc.replace(/\D/g, ''),
+          address: {
+            street: boletoStreet,
+            number: boletoNumber,
+            neighborhood: boletoNeighborhood,
+            city: boletoCity,
+            state: boletoState,
+            zipCode: boletoZipCode.replace(/\D/g, ''),
+          }
         },
       }, token)
       setBoletoResult({
@@ -106,6 +120,12 @@ export default function CashInPage() {
     setBoletoDueDate('')
     setBoletoPayerName('')
     setBoletoPayerDoc('')
+    setBoletoStreet('')
+    setBoletoNumber('')
+    setBoletoNeighborhood('')
+    setBoletoCity('')
+    setBoletoState('')
+    setBoletoZipCode('')
     setBoletoResult(null)
   }
 
@@ -304,6 +324,73 @@ export default function CashInPage() {
                         placeholder="000.000.000-00"
                         required
                       />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="boletoZipCode">CEP</Label>
+                        <Input
+                          id="boletoZipCode"
+                          value={boletoZipCode}
+                          onChange={(e) => setBoletoZipCode(e.target.value)}
+                          placeholder="00000-000"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="boletoState">Estado</Label>
+                        <Input
+                          id="boletoState"
+                          value={boletoState}
+                          onChange={(e) => setBoletoState(e.target.value)}
+                          placeholder="SP"
+                          maxLength={2}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="space-y-2 col-span-3">
+                        <Label htmlFor="boletoStreet">Rua</Label>
+                        <Input
+                          id="boletoStreet"
+                          value={boletoStreet}
+                          onChange={(e) => setBoletoStreet(e.target.value)}
+                          placeholder="Nome da rua"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2 col-span-1">
+                        <Label htmlFor="boletoNumber">Número</Label>
+                        <Input
+                          id="boletoNumber"
+                          value={boletoNumber}
+                          onChange={(e) => setBoletoNumber(e.target.value)}
+                          placeholder="123"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="boletoNeighborhood">Bairro</Label>
+                        <Input
+                          id="boletoNeighborhood"
+                          value={boletoNeighborhood}
+                          onChange={(e) => setBoletoNeighborhood(e.target.value)}
+                          placeholder="Centro"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="boletoCity">Cidade</Label>
+                        <Input
+                          id="boletoCity"
+                          value={boletoCity}
+                          onChange={(e) => setBoletoCity(e.target.value)}
+                          placeholder="São Paulo"
+                          required
+                        />
+                      </div>
                     </div>
                     <Button type="submit" className="w-full" disabled={boletoLoading}>
                       {boletoLoading ? (

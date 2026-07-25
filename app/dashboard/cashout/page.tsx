@@ -76,11 +76,17 @@ export default function CashOutPage() {
       return
     }
     
+    let finalPixKey = pixKey
+    const keyType = detectPixKeyType(pixKey)
+    if (keyType === 'CPF' || keyType === 'CNPJ') {
+      finalPixKey = pixKey.replace(/[.\-\/]/g, '')
+    }
+    
     setPixLoading(true)
     try {
       const result = await paymentsApi.sendPix({
-        pixKey: pixKey,
-        amount,
+        pixKey: finalPixKey,
+        amount: Math.round(amount * 100),
         description: pixDescription || undefined,
       }, token)
       setPixResult({ 
@@ -116,7 +122,7 @@ export default function CashOutPage() {
         accountType: transferAccountType,
         doc: transferDoc.replace(/\D/g, ''),
         name: transferName,
-        amount,
+        amount: Math.round(amount * 100),
       }, token)
       setTransferResult({ 
         status: result.status, 
@@ -137,9 +143,12 @@ export default function CashOutPage() {
     
     setBoletoLoading(true)
     try {
-      const result = await paymentsApi.payBoleto({
-        barCode: boletoCode.replace(/\D/g, ''),
-      }, token)
+      const cleanCode = boletoCode.replace(/\D/g, '')
+      const payload = cleanCode.length === 47 
+        ? { digitableLine: cleanCode } 
+        : { barCode: cleanCode }
+        
+      const result = await paymentsApi.payBoleto(payload, token)
       setBoletoResult({ 
         status: result.status, 
         message: result.status === 'PENDING_APPROVAL' 

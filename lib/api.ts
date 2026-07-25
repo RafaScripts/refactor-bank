@@ -436,6 +436,14 @@ export interface BoletoChargeRequest {
     name: string
     doc: string
     email?: string
+    address?: {
+      street: string
+      number: string
+      neighborhood: string
+      city: string
+      state: string
+      zipCode: string
+    }
   }
 }
 
@@ -465,7 +473,8 @@ export interface TransferRequest {
 }
 
 export interface BoletoPayRequest {
-  barCode: string
+  barCode?: string
+  digitableLine?: string
 }
 
 export interface TransactionResponse {

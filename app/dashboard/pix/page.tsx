@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { paymentsApi, pixKeysApi, type PixKey } from '@/lib/api'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency, detectPixKeyType } from '@/lib/format'
 import { QrCode, Send, Key, Copy, CheckCircle, Loader2, Trash2, Plus, AlertCircle } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { cn } from '@/lib/utils'
@@ -64,7 +64,7 @@ export default function PixPage() {
     setReceiveLoading(true)
     try {
       const result = await paymentsApi.createPixCharge({
-        amount: parseFloat(receiveAmount),
+        amount: Math.round(parseFloat(receiveAmount) * 100),
         description: receiveDescription || undefined,
       }, token)
       setPixCharge({ brCode: result.brCode, qrCode: result.qrCode })
@@ -78,11 +78,18 @@ export default function PixPage() {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!token) return
+    
+    let finalPixKey = sendKey
+    const keyType = detectPixKeyType(sendKey)
+    if (keyType === 'CPF' || keyType === 'CNPJ') {
+      finalPixKey = sendKey.replace(/[.\-\/]/g, '')
+    }
+    
     setSendLoading(true)
     try {
       const result = await paymentsApi.sendPix({
-        pixKey: sendKey,
-        amount: parseFloat(sendAmount),
+        pixKey: finalPixKey,
+        amount: Math.round(parseFloat(sendAmount) * 100),
         description: sendDescription || undefined,
       }, token)
       setSendResult({
