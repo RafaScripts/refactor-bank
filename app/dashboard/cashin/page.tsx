@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { QRCodeSVG } from 'qrcode.react'
@@ -17,7 +18,7 @@ export default function CashInPage() {
   const token = session?.user?.accessToken
   
   // Pix states
-  const [pixAmount, setPixAmount] = useState('')
+  const [pixAmount, setPixAmount] = useState<number | string>('')
   const [pixDescription, setPixDescription] = useState('')
   const [pixLoading, setPixLoading] = useState(false)
   const [pixResult, setPixResult] = useState<{
@@ -28,7 +29,7 @@ export default function CashInPage() {
   const [pixCopied, setPixCopied] = useState(false)
 
   // Boleto states
-  const [boletoAmount, setBoletoAmount] = useState('')
+  const [boletoAmount, setBoletoAmount] = useState<number | string>('')
   const [boletoDueDate, setBoletoDueDate] = useState('')
   const [boletoPayerName, setBoletoPayerName] = useState('')
   const [boletoPayerDoc, setBoletoPayerDoc] = useState('')
@@ -53,7 +54,7 @@ export default function CashInPage() {
     setPixLoading(true)
     try {
       const result = await paymentsApi.createPixCharge({
-        amount: Math.round(parseFloat(pixAmount) * 100),
+        amount: Number(pixAmount),
         description: pixDescription || undefined,
       }, token)
       setPixResult(result)
@@ -71,7 +72,7 @@ export default function CashInPage() {
     setBoletoLoading(true)
     try {
       const result = await paymentsApi.createBoletoCharge({
-        amount: Math.round(parseFloat(boletoAmount) * 100),
+        amount: Number(boletoAmount),
         dueDate: boletoDueDate,
         payer: {
           name: boletoPayerName,
@@ -163,13 +164,10 @@ export default function CashInPage() {
                   <form onSubmit={handleCreatePixCharge} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="pixAmount">Valor (R$)</Label>
-                      <Input
+                      <CurrencyInput
                         id="pixAmount"
-                        type="number"
-                        step="0.01"
-                        min="0.01"
                         value={pixAmount}
-                        onChange={(e) => setPixAmount(e.target.value)}
+                        onValueChange={setPixAmount}
                         placeholder="0,00"
                         required
                       />
@@ -283,13 +281,10 @@ export default function CashInPage() {
                   <form onSubmit={handleCreateBoleto} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="boletoAmount">Valor (R$)</Label>
-                      <Input
+                      <CurrencyInput
                         id="boletoAmount"
-                        type="number"
-                        step="0.01"
-                        min="0.01"
                         value={boletoAmount}
-                        onChange={(e) => setBoletoAmount(e.target.value)}
+                        onValueChange={setBoletoAmount}
                         placeholder="0,00"
                         required
                       />

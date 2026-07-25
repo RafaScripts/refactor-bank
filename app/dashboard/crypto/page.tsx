@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -24,7 +25,7 @@ export default function CryptoPage() {
 
   // Buy states
   const [buyCurrency, setBuyCurrency] = useState<'BTC' | 'ETH'>('BTC')
-  const [buyAmountBRL, setBuyAmountBRL] = useState('')
+  const [buyAmountBRL, setBuyAmountBRL] = useState<number | string>(\'\')
   const [buyLoading, setBuyLoading] = useState(false)
   const [buyResult, setBuyResult] = useState<{ success: boolean; amount?: number } | null>(null)
 
@@ -102,7 +103,7 @@ export default function CryptoPage() {
       const result = await cryptoApi.buy({
         bankAccountId,
         symbol: buyCurrency,
-        amountBrl: parseFloat(buyAmountBRL),
+        amountBrl: Number(buyAmountBRL),
       }, token)
       setBuyResult({ success: true, amount: result.amount })
     } catch (error) {
@@ -154,7 +155,7 @@ export default function CryptoPage() {
 
   const currentPrice = prices[buyCurrency]?.price || (buyCurrency === 'BTC' ? 500000 : 9000)
   const estimatedCrypto = buyAmountBRL
-    ? parseFloat(buyAmountBRL) / currentPrice
+    ? Number(buyAmountBRL) / currentPrice
     : 0
 
   const totalCryptoValue = wallets.reduce((sum, w) => {
@@ -339,14 +340,11 @@ export default function CryptoPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="buyAmount">Valor em reais (R$)</Label>
-                    <Input
+                    <CurrencyInput
                       id="buyAmount"
-                      type="number"
-                      step="0.01"
-                      min="10"
                       max={fiatBalance}
                       value={buyAmountBRL}
-                      onChange={(e) => setBuyAmountBRL(e.target.value)}
+                      onValueChange={setBuyAmountBRL}
                       placeholder="0,00"
                       required
                     />

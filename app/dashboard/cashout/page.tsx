@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useSession } from 'next-auth/react'
@@ -29,7 +30,7 @@ export default function CashOutPage() {
   
   // Pix states
   const [pixKey, setPixKey] = useState('')
-  const [pixAmount, setPixAmount] = useState('')
+  const [pixAmount, setPixAmount] = useState<number | string>('')
   const [pixDescription, setPixDescription] = useState('')
   const [pixLoading, setPixLoading] = useState(false)
   const [pixResult, setPixResult] = useState<{ status: string; message?: string } | null>(null)
@@ -42,7 +43,7 @@ export default function CashOutPage() {
   const [transferAccountType, setTransferAccountType] = useState<'CHECKING' | 'SAVINGS'>('CHECKING')
   const [transferDoc, setTransferDoc] = useState('')
   const [transferName, setTransferName] = useState('')
-  const [transferAmount, setTransferAmount] = useState('')
+  const [transferAmount, setTransferAmount] = useState<number | string>('')
   const [transferLoading, setTransferLoading] = useState(false)
   const [transferResult, setTransferResult] = useState<{ status: string; message?: string } | null>(null)
 
@@ -86,7 +87,7 @@ export default function CashOutPage() {
     try {
       const result = await paymentsApi.sendPix({
         pixKey: finalPixKey,
-        amount: Math.round(amount * 100),
+        amount: Number(amount),
         description: pixDescription || undefined,
       }, token)
       setPixResult({ 
@@ -122,7 +123,7 @@ export default function CashOutPage() {
         accountType: transferAccountType,
         doc: transferDoc.replace(/\D/g, ''),
         name: transferName,
-        amount: Math.round(amount * 100),
+        amount: Number(amount),
       }, token)
       setTransferResult({ 
         status: result.status, 
@@ -277,14 +278,11 @@ export default function CashOutPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="pixAmount">Valor (R$)</Label>
-                    <Input
+                    <CurrencyInput
                       id="pixAmount"
-                      type="number"
-                      step="0.01"
-                      min="0.01"
                       max={balance}
                       value={pixAmount}
-                      onChange={(e) => setPixAmount(e.target.value)}
+                      onValueChange={setPixAmount}
                       placeholder="0,00"
                       required
                     />
@@ -437,14 +435,11 @@ export default function CashOutPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="transferAmount">Valor (R$)</Label>
-                    <Input
+                    <CurrencyInput
                       id="transferAmount"
-                      type="number"
-                      step="0.01"
-                      min="0.01"
                       max={balance}
                       value={transferAmount}
-                      onChange={(e) => setTransferAmount(e.target.value)}
+                      onValueChange={setTransferAmount}
                       placeholder="0,00"
                       required
                     />

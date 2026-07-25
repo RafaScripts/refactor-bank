@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -19,14 +20,14 @@ export default function PixPage() {
   const token = session?.user?.accessToken
 
   // Receive states
-  const [receiveAmount, setReceiveAmount] = useState('')
+  const [receiveAmount, setReceiveAmount] = useState<number | string>('')
   const [receiveDescription, setReceiveDescription] = useState('')
   const [receiveLoading, setReceiveLoading] = useState(false)
   const [pixCharge, setPixCharge] = useState<{ brCode: string; qrCode: string } | null>(null)
 
   // Send states
   const [sendKey, setSendKey] = useState('')
-  const [sendAmount, setSendAmount] = useState('')
+  const [sendAmount, setSendAmount] = useState<number | string>('')
   const [sendDescription, setSendDescription] = useState('')
   const [sendLoading, setSendLoading] = useState(false)
   const [sendResult, setSendResult] = useState<{ status: string; message?: string } | null>(null)
@@ -64,7 +65,7 @@ export default function PixPage() {
     setReceiveLoading(true)
     try {
       const result = await paymentsApi.createPixCharge({
-        amount: Math.round(parseFloat(receiveAmount) * 100),
+        amount: Number(receiveAmount),
         description: receiveDescription || undefined,
       }, token)
       setPixCharge({ brCode: result.brCode, qrCode: result.qrCode })
@@ -89,7 +90,7 @@ export default function PixPage() {
     try {
       const result = await paymentsApi.sendPix({
         pixKey: finalPixKey,
-        amount: Math.round(parseFloat(sendAmount) * 100),
+        amount: Number(sendAmount),
         description: sendDescription || undefined,
       }, token)
       setSendResult({
@@ -194,13 +195,10 @@ export default function PixPage() {
                 <form onSubmit={handleReceive} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="receiveAmount">Valor (R$)</Label>
-                    <Input
-                      id="receiveAmount"
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      value={receiveAmount}
-                      onChange={(e) => setReceiveAmount(e.target.value)}
+                    <CurrencyInput
+                        id="receiveAmount"
+                        value={receiveAmount}
+                        onValueChange={setReceiveAmount}
                       placeholder="0,00"
                       required
                     />
@@ -280,13 +278,10 @@ export default function PixPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="sendAmount">Valor (R$)</Label>
-                    <Input
-                      id="sendAmount"
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      value={sendAmount}
-                      onChange={(e) => setSendAmount(e.target.value)}
+                    <CurrencyInput
+                        id="sendAmount"
+                        value={sendAmount}
+                        onValueChange={setSendAmount}
                       placeholder="0,00"
                       required
                     />
