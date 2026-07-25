@@ -14,7 +14,7 @@ ENV PNPM_CONFIG_STRICT_DEP_BUILDS=false
 
 # Install dependencies
 COPY package.json pnpm-lock.yaml* ./
-RUN pnpm i --frozen-lockfile
+RUN pnpm config set ignore-scripts true && pnpm i --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM base AS builder
