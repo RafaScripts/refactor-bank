@@ -20,6 +20,7 @@ import {
   LogOut,
   Menu,
   X,
+  FileSignature
 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -28,10 +29,11 @@ import { BankSelector } from '@/components/dashboard/bank-selector'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Contratos / O.S', href: '/dashboard/contracts', icon: FileSignature },
   { name: 'Receber', href: '/dashboard/cashin', icon: ArrowDownLeft },
   { name: 'Pagar', href: '/dashboard/cashout', icon: ArrowUpRight },
   { name: 'Extrato', href: '/dashboard/statement', icon: FileText },
-  { name: 'Crypto', href: '/dashboard/crypto', icon: Bitcoin },
+  { name: 'Crypto & Câmbio', href: '/dashboard/crypto', icon: Bitcoin },
   { name: 'Crédito', href: '/dashboard/credit', icon: CreditCard },
 ]
 

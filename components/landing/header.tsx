@@ -18,6 +18,18 @@ export function Header() {
             </div>
             <span className="font-semibold text-xl text-foreground font-mono">Refact Bank</span>
           </div>
+
+          <nav className="hidden md:flex gap-8">
+            <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Ferramentas
+            </Link>
+            <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Preços
+            </Link>
+            <Link href="/verify" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              Validar Documento
+            </Link>
+          </nav>
           
           {/* Desktop Nav */}
           <div className="hidden sm:flex items-center gap-4">
