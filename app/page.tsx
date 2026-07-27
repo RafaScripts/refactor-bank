@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Shield, Terminal, Webhook, Code2, Cpu, CheckCircle } from 'lucide-react'
+import { WorkflowAnimation } from '@/components/landing/workflow-animation'
 
 const features = [
   {
@@ -152,28 +153,8 @@ export default function HomePage() {
               </div>
             </div>
             
-            {/* Code Block Mockup */}
-            <div className="relative border border-border bg-card rounded-md shadow-2xl p-6 overflow-hidden">
-              <div className="flex gap-2 mb-6">
-                <div className="w-3 h-3 rounded-full bg-destructive/80" />
-                <div className="w-3 h-3 rounded-full bg-warning/80" />
-                <div className="w-3 h-3 rounded-full bg-success/80" />
-              </div>
-              <pre className="font-mono text-xs sm:text-sm text-muted-foreground leading-relaxed overflow-x-auto">
-                <code className="language-typescript">
-<span className="text-primary">import</span> {'{ Order }'} <span className="text-primary">from</span> <span className="text-success">'@refact/services'</span>{'\n\n'}
-<span className="text-muted-foreground/50">// Fatura internacional gerada em 1 clique</span>{'\n'}
-<span className="text-primary">const</span> invoice = <span className="text-primary">new</span> Order({'{'}{'\n'}
-{'  '}client: <span className="text-success">'Acme Corp (USA)'</span>,{'\n'}
-{'  '}service: <span className="text-success">'Engenharia de Software'</span>,{'\n'}
-{'  '}amount: <span className="text-warning">5000.00</span>,{'\n'}
-{'  '}currency: <span className="text-success">'USDC'</span>{'\n'}
-{'}'}){'\n\n'}
-<span className="text-muted-foreground/50">// Liquidação direta para a sua conta Pix</span>{'\n'}
-<span className="text-primary">await</span> invoice.settleAndConvert()
-                </code>
-              </pre>
-            </div>
+            {/* Animated UI Workflow */}
+            <WorkflowAnimation />
           </div>
         </div>
       </section>
