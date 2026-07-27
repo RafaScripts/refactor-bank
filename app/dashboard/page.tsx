@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { balanceApi, type Transaction, type WalletListResponse } from '@/lib/api'
+import { balanceApi, type Transaction } from '@/lib/api'
 
 interface DashboardBalance {
   available: number
@@ -100,13 +100,21 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Olá, {user?.name?.split(' ')[0] || 'Usuário'}
-        </h1>
-        <p className="text-muted-foreground">
-          Bem-vindo de volta ao seu banco digital
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Olá, {user?.name?.split(' ')[0] || 'Usuário'}
+          </h1>
+          <p className="text-muted-foreground">
+            Bem-vindo de volta ao seu banco digital
+          </p>
+        </div>
+        <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground bg-accent/50 px-3 py-1.5 rounded-md border border-border">
+          <span>Ações rápidas:</span>
+          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+            <span className="text-xs">⌘</span>K
+          </kbd>
+        </div>
       </div>
 
       {/* Onboarding Alert */}

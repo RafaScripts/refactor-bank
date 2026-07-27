@@ -23,11 +23,11 @@ const cryptoColors: Record<string, string> = {
 
 export function CryptoWallets({ wallets }: CryptoWalletsProps) {
   return (
-    <Card>
+    <Card className="border-l-4 border-l-crypto bg-card">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-semibold">Criptomoedas</CardTitle>
         <Link href="/dashboard/crypto">
-          <Button variant="ghost" size="sm" className="text-primary">
+          <Button variant="ghost" size="sm" className="text-crypto">
             Negociar
           </Button>
         </Link>
@@ -37,7 +37,7 @@ export function CryptoWallets({ wallets }: CryptoWalletsProps) {
           <div className="text-center py-4 text-muted-foreground">
             <p>Você ainda não possui criptomoedas</p>
             <Link href="/dashboard/crypto">
-              <Button variant="link" className="text-primary mt-2">
+              <Button variant="link" className="text-crypto mt-2">
                 Comprar agora
               </Button>
             </Link>

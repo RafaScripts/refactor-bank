@@ -1,63 +1,63 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Shield, Zap, CreditCard, Bitcoin, Building2, CheckCircle } from 'lucide-react'
+import { ArrowRight, Shield, Terminal, Webhook, Code2, Cpu, CheckCircle } from 'lucide-react'
 
 const features = [
   {
-    icon: Zap,
-    title: 'Pix instantâneo',
-    description: 'Envie e receba dinheiro 24h por dia, 7 dias por semana',
+    icon: Terminal,
+    title: 'Gestão de Serviços e Contratos',
+    description: 'Emita ordens de serviço, envie faturas e gerencie contratos direto pelo terminal do seu banco.',
   },
   {
-    icon: CreditCard,
-    title: 'Conta digital gratuita',
-    description: 'Sem taxa de manutenção ou tarifas escondidas',
+    icon: Code2,
+    title: 'Fluxo Global Sem Atrito',
+    description: 'Feito para quem trabalha remoto. Receba pagamentos de clientes do mundo todo sem burocracia.',
   },
   {
-    icon: Bitcoin,
-    title: 'Cripto integrado',
-    description: 'Compre, venda e transfira Bitcoin e Ethereum',
+    icon: Cpu,
+    title: 'Híbrido: Fiat & Web3',
+    description: 'Receba em cripto (USDC, Ethereum, Polygon) e pague despesas do dia a dia em Reais via Pix.',
   },
   {
-    icon: Building2,
-    title: 'Conta PJ completa',
-    description: 'Gestão financeira para sua empresa com multi-aprovação',
+    icon: Webhook,
+    title: 'Auto-Conversão Imediata',
+    description: 'Sem dor de cabeça com corretoras. Converta seus saldos Web3 para Fiat automaticamente.',
   },
   {
     icon: Shield,
-    title: 'Segurança avançada',
-    description: 'Proteção com criptografia e autenticação em duas etapas',
+    title: 'Segurança Institucional',
+    description: 'Custódia forte de ativos, autenticação em duas etapas e compliance total de dados.',
   },
 ]
 
 const benefits = [
-  'Abertura de conta 100% digital',
-  'Pix, TED e pagamento de boletos',
-  'Cartão virtual para compras online',
-  'Extrato detalhado em tempo real',
-  'Suporte 24/7 via chat',
-  'Integração com seu sistema via API',
+  'Interface Dark-Mode Natively',
+  'Comandos via Teclado (Cmd+K)',
+  'Sem Taxas Ocultas',
+  'Multi-moeda (Crypto/Fiat)',
+  'Liquidez Imediata (Pix)',
+  'Foco em Produtividade',
 ]
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background selection:bg-primary/20 selection:text-primary">
       {/* Header */}
-      <header className="border-b border-border/50">
+      <header className="border-b border-border/50 sticky top-0 bg-background/80 backdrop-blur-sm z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">R</span>
+              <div className="w-10 h-10 rounded-sm bg-foreground flex items-center justify-center">
+                <span className="text-background font-bold text-lg font-mono">_R</span>
               </div>
-              <span className="font-semibold text-xl text-foreground">Refact Bank</span>
+              <span className="font-semibold text-xl text-foreground font-mono">Refact Bank</span>
             </div>
             <div className="flex items-center gap-4">
               <Link href="/login">
-                <Button variant="ghost">Entrar</Button>
+                <Button variant="ghost" className="font-mono text-xs uppercase tracking-wider">/login</Button>
               </Link>
               <Link href="/signup">
-                <Button>Abrir conta</Button>
+                <Button className="font-mono text-xs uppercase tracking-wider rounded-sm">Criar Conta</Button>
               </Link>
             </div>
           </div>
@@ -65,60 +65,58 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <section className="py-20 lg:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              <Zap className="w-4 h-4" />
-              Conta digital completa para PF e PJ
+      <section className="py-24 lg:py-32 relative overflow-hidden">
+        {/* Technical background grid */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-4xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded border border-border bg-card/50 text-muted-foreground text-xs font-mono mb-8">
+              <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+              Sistemas Operacionais
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 text-balance">
-              Sua conta bancária{' '}
-              <span className="text-primary">100% digital</span>
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground mb-6 tracking-tight leading-tight">
+              O banco definitivo para o <br />
+              <span className="text-muted-foreground">profissional de tecnologia.</span>
             </h1>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto text-pretty">
-              Abra sua conta em minutos, sem burocracia. Pix, TED, boletos, criptomoedas 
-              e muito mais em um só lugar.
+            <p className="text-xl text-muted-foreground mb-10 max-w-2xl font-mono text-sm leading-relaxed">
+              &gt; Gerencie contratos, ordens de serviço e pagamentos globais. Conversão imediata e sem atrito entre Reais e Cripto (Web3) num único ambiente desenhado para você.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
               <Link href="/signup">
-                <Button size="lg" className="w-full sm:w-auto">
-                  Abrir conta grátis
+                <Button size="lg" className="w-full sm:w-auto h-12 px-8 rounded-sm font-mono text-sm uppercase">
+                  Acessar Dashboard
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
-              <Link href="/login">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                  Já tenho conta
-                </Button>
-              </Link>
+              <div className="hidden sm:flex items-center gap-2 px-4 py-3 border border-border rounded-sm bg-card font-mono text-sm text-muted-foreground">
+                <span className="text-primary">USDC</span> {'->'} BRL via Pix
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section className="py-20 bg-card/50">
+      <section className="py-24 bg-card border-y border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">
-              Tudo que você precisa em um banco digital
+          <div className="mb-16">
+            <h2 className="text-3xl font-bold text-foreground mb-4 font-mono">
+              // ferramentas
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Funcionalidades completas para gerenciar suas finanças pessoais ou empresariais
+            <p className="text-muted-foreground max-w-2xl text-sm font-mono">
+              Tudo que você precisa para gerenciar sua carreira internacional.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border p-px">
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="p-6 rounded-2xl bg-card border border-border hover:border-primary/50 transition-colors"
+                className="p-8 bg-card transition-colors hover:bg-accent/50 group"
               >
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                  <feature.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground text-sm">{feature.description}</p>
+                <feature.icon className="w-8 h-8 text-primary mb-6 group-hover:scale-110 transition-transform" />
+                <h3 className="text-lg font-semibold text-foreground mb-3 font-mono">{feature.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -126,88 +124,75 @@ export default function HomePage() {
       </section>
 
       {/* Benefits */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <section className="py-24 relative">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] opacity-50 mask-image:linear-gradient(to_left,white,transparent)"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <h2 className="text-3xl font-bold text-foreground mb-4">
-                Por que escolher o Refact Bank?
+              <h2 className="text-3xl font-bold text-foreground mb-6 font-mono">
+                &lt;DeveloperExperience /&gt;
               </h2>
-              <p className="text-muted-foreground mb-8">
-                Somos uma plataforma bancária completa, desenvolvida para simplificar 
-                sua vida financeira com tecnologia de ponta e segurança avançada.
+              <p className="text-muted-foreground mb-10 text-lg">
+                Construído por engenheiros, para engenheiros. Nosso foco obcecado em DX significa que o banco sai do seu caminho para você focar no que importa: escrever código.
               </p>
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-2 gap-y-6 gap-x-4">
                 {benefits.map((benefit) => (
                   <div key={benefit} className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span className="text-sm text-foreground">{benefit}</span>
+                    <CheckCircle className="w-4 h-4 text-primary flex-shrink-0" />
+                    <span className="text-sm font-mono text-muted-foreground">{benefit}</span>
                   </div>
                 ))}
               </div>
-              <div className="mt-8">
+              <div className="mt-12">
                 <Link href="/signup">
-                  <Button>
-                    Começar agora
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                  <Button className="rounded-sm font-mono uppercase text-xs tracking-wide">
+                    Criar Conta
                   </Button>
                 </Link>
               </div>
             </div>
-            <div className="relative">
-              <div className="aspect-square rounded-3xl bg-gradient-to-br from-primary/20 via-card to-card border border-border overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-48 h-48 rounded-3xl bg-primary/10 flex items-center justify-center">
-                    <div className="w-24 h-24 rounded-2xl bg-primary flex items-center justify-center">
-                      <span className="text-primary-foreground font-bold text-4xl">R</span>
-                    </div>
-                  </div>
-                </div>
+            
+            {/* Code Block Mockup */}
+            <div className="relative border border-border bg-card rounded-md shadow-2xl p-6 overflow-hidden">
+              <div className="flex gap-2 mb-6">
+                <div className="w-3 h-3 rounded-full bg-destructive/80" />
+                <div className="w-3 h-3 rounded-full bg-warning/80" />
+                <div className="w-3 h-3 rounded-full bg-success/80" />
               </div>
+              <pre className="font-mono text-xs sm:text-sm text-muted-foreground leading-relaxed overflow-x-auto">
+                <code className="language-typescript">
+<span className="text-primary">import</span> {'{ Order }'} <span className="text-primary">from</span> <span className="text-success">'@refact/services'</span>{'\n\n'}
+<span className="text-muted-foreground/50">// Fatura internacional gerada em 1 clique</span>{'\n'}
+<span className="text-primary">const</span> invoice = <span className="text-primary">new</span> Order({'{'}{'\n'}
+{'  '}client: <span className="text-success">'Acme Corp (USA)'</span>,{'\n'}
+{'  '}service: <span className="text-success">'Engenharia de Software'</span>,{'\n'}
+{'  '}amount: <span className="text-warning">5000.00</span>,{'\n'}
+{'  '}currency: <span className="text-success">'USDC'</span>{'\n'}
+{'}'}){'\n\n'}
+<span className="text-muted-foreground/50">// Liquidação direta para a sua conta Pix</span>{'\n'}
+<span className="text-primary">await</span> invoice.settleAndConvert()
+                </code>
+              </pre>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 bg-primary/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-4">
-            Pronto para começar?
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-            Abra sua conta em menos de 5 minutos e tenha acesso a todas as funcionalidades.
-          </p>
-          <Link href="/signup">
-            <Button size="lg">
-              Abrir conta grátis
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-
       {/* Footer */}
-      <footer className="border-t border-border py-8">
+      <footer className="border-t border-border py-12 bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">R</span>
-              </div>
-              <span className="text-sm text-muted-foreground">
-                Refact Bank - Sua conta digital completa
+              <span className="text-sm font-mono text-muted-foreground">
+                © {new Date().getFullYear()} Refact Bank // For tech professionals.
               </span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <Link href="/terms" className="hover:text-foreground">
-                Termos de uso
+            <div className="flex items-center gap-6 text-sm font-mono text-muted-foreground">
+              <Link href="/terms" className="hover:text-foreground transition-colors">
+                /terms
               </Link>
-              <Link href="/privacy" className="hover:text-foreground">
-                Privacidade
-              </Link>
-              <Link href="/help" className="hover:text-foreground">
-                Ajuda
+              <Link href="/privacy" className="hover:text-foreground transition-colors">
+                /privacy
               </Link>
             </div>
           </div>
