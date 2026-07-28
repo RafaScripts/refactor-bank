@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/format'
 import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
+import { PdfExportButton } from '@/components/ui/pdf-export-button'
 
 import { contractsApi } from '@/lib/api'
 
@@ -97,9 +98,13 @@ export default function ContractDetailsPage() {
         </div>
         <div className="flex gap-2">
           {contract.status === 'SIGNED' && (
-            <Button variant="outline" className="text-primary border-primary/50 hover:bg-primary/10">
-              <Download className="w-4 h-4 mr-2" /> Baixar PDF Certificado
-            </Button>
+            <PdfExportButton
+              targetId="contract-content"
+              filename={`contrato-${contract.osId}.pdf`}
+              buttonText="Baixar PDF Certificado"
+              variant="outline"
+              className="text-primary border-primary/50 hover:bg-primary/10"
+            />
           )}
         </div>
       </div>
@@ -112,7 +117,7 @@ export default function ContractDetailsPage() {
               <CardDescription>Termos que serão assinados por você e pelo cliente.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="p-6 bg-accent/30 rounded-lg border border-border prose prose-sm dark:prose-invert max-w-none font-serif">
+              <div id="contract-content" className="p-6 bg-card rounded-lg border border-border prose prose-sm dark:prose-invert max-w-none font-serif text-foreground">
                 <h2 className="text-center">CONTRATO DE PRESTAÇÃO DE SERVIÇOS (O.S #{contract.osId})</h2>
                 <p>
                   <strong>CONTRATANTE:</strong> {contract.clientName}, documento {contract.clientDoc}, email {contract.clientEmail}.

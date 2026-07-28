@@ -10,6 +10,7 @@ import { formatCurrency } from '@/lib/format'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { contractsApi } from '@/lib/api'
+import { PdfExportButton } from '@/components/ui/pdf-export-button'
 
 export default function PublicSignPage() {
   const { id } = useParams()
@@ -101,7 +102,7 @@ export default function PublicSignPage() {
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
       
-      {clientSigned ? (
+      {clientSigned && (
         <Card className="border-emerald-500/50 bg-emerald-500/5">
           <CardHeader className="text-center pb-2">
             <div className="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -111,20 +112,26 @@ export default function PublicSignPage() {
             <CardDescription>Obrigado, {contract.clientName}. A assinatura foi registrada legalmente e armazenada com criptografia.</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center pt-4">
-            <Button variant="default" size="lg" className="bg-emerald-600 hover:bg-emerald-700">
-              <Download className="w-5 h-5 mr-2" /> Baixar Cópia Certificada (PDF)
-            </Button>
+            <PdfExportButton 
+              targetId="contract-content"
+              filename={`contrato-${contract.osId}.pdf`}
+              buttonText="Baixar Cópia Certificada (PDF)"
+              className="bg-emerald-600 hover:bg-emerald-700"
+              variant="default"
+              size="lg"
+            />
           </CardContent>
         </Card>
-      ) : (
-        <Card className="border-border">
-          <CardHeader className="border-b border-border bg-accent/30">
-            <CardTitle className="text-xl">Revisar e Assinar Contrato</CardTitle>
-            <CardDescription>Por favor, leia atentamente os termos abaixo antes de prosseguir com a assinatura eletrônica.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="p-6 md:p-10 prose prose-sm dark:prose-invert max-w-none font-serif">
-              <h2 className="text-center mb-8">CONTRATO DE PRESTAÇÃO DE SERVIÇOS (O.S #{contract.osId})</h2>
+      )}
+
+      <Card className="border-border">
+        <CardHeader className="border-b border-border bg-accent/30">
+          <CardTitle className="text-xl">Revisar e Assinar Contrato</CardTitle>
+          <CardDescription>Por favor, leia atentamente os termos abaixo antes de prosseguir com a assinatura eletrônica.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div id="contract-content" className="p-6 md:p-10 prose prose-sm dark:prose-invert max-w-none font-serif bg-card text-foreground">
+            <h2 className="text-center mb-8">CONTRATO DE PRESTAÇÃO DE SERVIÇOS (O.S #{contract.osId})</h2>
               
               <p>
                 <strong>CONTRATANTE:</strong> {contract.clientName}, portador(a) do documento {contract.clientDoc}, com o endereço eletrônico {contract.clientEmail}.
@@ -146,50 +153,51 @@ export default function PublicSignPage() {
             </div>
           </CardContent>
           
-          <CardFooter className="border-t border-border bg-accent/20 p-6 flex flex-col gap-6">
-            <div className="bg-card p-4 rounded-xl border border-border space-y-4 w-full">
-              <div className="flex items-start gap-4">
-                <Fingerprint className="w-6 h-6 text-primary mt-1 shrink-0" />
-                <div>
-                  <h4 className="font-semibold text-foreground">Autorização de Assinatura</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Ao clicar em assinar, você, {contract.clientName} (Doc: {contract.clientDoc}), concorda expressamente com os termos acima e autoriza a coleta do seu IP e geolocalização para fins de validade legal.
-                  </p>
+          {!clientSigned && (
+            <CardFooter className="border-t border-border bg-accent/20 p-6 flex flex-col gap-6">
+              <div className="bg-card p-4 rounded-xl border border-border space-y-4 w-full">
+                <div className="flex items-start gap-4">
+                  <Fingerprint className="w-6 h-6 text-primary mt-1 shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-foreground">Autorização de Assinatura</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Ao clicar em assinar, você, {contract.clientName} (Doc: {contract.clientDoc}), concorda expressamente com os termos acima e autoriza a coleta do seu IP e geolocalização para fins de validade legal.
+                    </p>
+                  </div>
                 </div>
+                
+                {contract.requireDidit && (
+                  <div className="flex items-center space-x-2 pt-2 border-t border-border">
+                    <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                    <Label className="text-sm text-muted-foreground">
+                      O gestor exigiu a verificação DIDIT (Prova de Vida On-chain) para este contrato.
+                    </Label>
+                  </div>
+                )}
               </div>
-              
-              {contract.requireDidit && (
-                <div className="flex items-center space-x-2 pt-2 border-t border-border">
-                  <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                  <Label className="text-sm text-muted-foreground">
-                    O gestor exigiu a verificação DIDIT (Prova de Vida On-chain) para este contrato.
-                  </Label>
+
+              {errorMsg && (
+                <div className="bg-destructive/10 border border-destructive text-destructive text-sm p-4 rounded-xl flex items-start gap-2">
+                  <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <p>{errorMsg}</p>
                 </div>
               )}
-            </div>
 
-            {errorMsg && (
-              <div className="bg-destructive/10 border border-destructive text-destructive text-sm p-4 rounded-xl flex items-start gap-2">
-                <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
-                <p>{errorMsg}</p>
-              </div>
-            )}
-
-            <Button 
-              size="lg" 
-              className="w-full text-lg h-14" 
-              onClick={handleSign}
-              disabled={signing}
-            >
-              {signing ? (
-                <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processando Assinatura Segura...</>
-              ) : (
-                <><FileSignature className="w-5 h-5 mr-2" /> Assinar Contrato Eletronicamente</>
-              )}
-            </Button>
-          </CardFooter>
+              <Button 
+                size="lg" 
+                className="w-full text-lg h-14" 
+                onClick={handleSign}
+                disabled={signing}
+              >
+                {signing ? (
+                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processando Assinatura Segura...</>
+                ) : (
+                  <><FileSignature className="w-5 h-5 mr-2" /> Assinar Contrato Eletronicamente</>
+                )}
+              </Button>
+            </CardFooter>
+          )}
         </Card>
-      )}
 
     </div>
   )
