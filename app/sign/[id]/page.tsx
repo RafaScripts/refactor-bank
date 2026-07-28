@@ -16,7 +16,7 @@ export default function PublicSignPage() {
   const [contract, setContract] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [signing, setSigning] = useState(false)
-  const [useDidit, setUseDidit] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
     async function fetchContract() {
@@ -34,16 +34,21 @@ export default function PublicSignPage() {
 
   const handleSign = async () => {
     setSigning(true)
+    setErrorMsg('')
     try {
-      let geolocation = 'Desconhecida'
+      let geolocation = ''
       try {
-        const position = await new Promise<GeolocationPosition>((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000 }))
+        const position = await new Promise<GeolocationPosition>((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, enableHighAccuracy: true }))
         geolocation = `${position.coords.latitude}, ${position.coords.longitude}`
-      } catch (e) { /* ignore */ }
+      } catch (e: any) {
+        setSigning(false)
+        setErrorMsg('É obrigatório permitir a localização do dispositivo para assinar o contrato (requisito de validade jurídica). Verifique as permissões do seu navegador.')
+        return
+      }
 
       // Didit verification mock se ativado
       let diditLogId = undefined
-      if (useDidit) {
+      if (contract.requireDidit) {
         // Simulando a comunicação com a rede DIDIT para prova de identidade
         await new Promise(r => setTimeout(r, 2000))
         diditLogId = `didit_log_${Math.random().toString(36).substring(7)}`
@@ -54,7 +59,7 @@ export default function PublicSignPage() {
         name: contract.clientName,
         doc: contract.clientDoc,
         geolocation,
-        diditVerified: useDidit,
+        diditVerified: contract.requireDidit,
         diditLogId
       }
 
@@ -153,17 +158,22 @@ export default function PublicSignPage() {
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2 pt-2 border-t border-border">
-                <Switch 
-                  id="didit" 
-                  checked={useDidit} 
-                  onCheckedChange={setUseDidit} 
-                />
-                <Label htmlFor="didit" className="text-sm text-muted-foreground cursor-pointer">
-                  Utilizar protocolo DIDIT para dupla verificação de identidade (Prova de Vida On-chain)
-                </Label>
-              </div>
+              {contract.requireDidit && (
+                <div className="flex items-center space-x-2 pt-2 border-t border-border">
+                  <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                  <Label className="text-sm text-muted-foreground">
+                    O gestor exigiu a verificação DIDIT (Prova de Vida On-chain) para este contrato.
+                  </Label>
+                </div>
+              )}
             </div>
+
+            {errorMsg && (
+              <div className="bg-destructive/10 border border-destructive text-destructive text-sm p-4 rounded-xl flex items-start gap-2">
+                <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                <p>{errorMsg}</p>
+              </div>
+            )}
 
             <Button 
               size="lg" 

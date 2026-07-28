@@ -11,6 +11,7 @@ import { FileSignature, Loader2, ArrowLeft } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { contractsApi } from '@/lib/api'
+import { Switch } from '@/components/ui/switch'
 
 export default function CreateContractPage() {
   const router = useRouter()
@@ -23,6 +24,7 @@ export default function CreateContractPage() {
     clientName: '',
     clientDoc: '',
     clientEmail: '',
+    requireDidit: false,
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -46,6 +48,7 @@ export default function CreateContractPage() {
         clientName: formData.clientName,
         clientDoc: formData.clientDoc,
         clientEmail: formData.clientEmail,
+        requireDidit: formData.requireDidit,
       }
 
       const data = await contractsApi.createContract(contractPayload, '')
@@ -120,6 +123,17 @@ export default function CreateContractPage() {
                   <Input name="clientEmail" type="email" required placeholder="cliente@exemplo.com" value={formData.clientEmail} onChange={handleChange} className="bg-accent/50 focus:bg-background transition-colors" />
                 </div>
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2 pt-2 border-t border-border">
+              <Switch 
+                id="requireDidit" 
+                checked={formData.requireDidit} 
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, requireDidit: checked }))} 
+              />
+              <Label htmlFor="requireDidit" className="text-sm cursor-pointer">
+                Exigir validação DIDIT (Prova de Vida On-chain) para assinatura do cliente
+              </Label>
             </div>
 
             <Button type="submit" className="w-full hover:scale-[1.01] active:scale-95 transition-transform h-12" disabled={loading}>
