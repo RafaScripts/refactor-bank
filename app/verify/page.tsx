@@ -22,6 +22,7 @@ export default function VerifyPage() {
     setError('')
     setResult(null)
 
+    try {
       // We need to implement a search by hash or just use the verify endpoint
       // wait, the backend verify endpoint currently takes `{ hash, signature }`
       // But the previous implementation took `documentHash: hash`.
@@ -32,7 +33,8 @@ export default function VerifyPage() {
       if (data) {
         setResult(data)
       }
-      setError('Erro ao comunicar com o servidor.')
+    } catch (err: any) {
+      setError(err.message || 'Erro ao comunicar com o servidor.')
     } finally {
       setLoading(false)
     }
