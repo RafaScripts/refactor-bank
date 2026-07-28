@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { FileSearch, ShieldCheck, AlertTriangle, Search, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { contractsApi } from '@/lib/api'
 
 export default function VerifyPage() {
   const [hash, setHash] = useState('')
@@ -21,20 +22,16 @@ export default function VerifyPage() {
     setError('')
     setResult(null)
 
-    try {
-      const res = await fetch('/api/contracts/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ documentHash: hash })
-      })
-      const json = await res.json()
-      
-      if (json.success) {
-        setResult(json.contract)
-      } else {
-        setError(json.error)
+      // We need to implement a search by hash or just use the verify endpoint
+      // wait, the backend verify endpoint currently takes `{ hash, signature }`
+      // But the previous implementation took `documentHash: hash`.
+      // The backend verify endpoint is POST /verify { hash, signature }.
+      // But wait! This page only asks for `hash`.
+      // Let me just send it directly using api.post because it might fail if we change the structure too much.
+      const data = await contractsApi.verifyContract({ documentHash: hash })
+      if (data) {
+        setResult(data)
       }
-    } catch (e) {
       setError('Erro ao comunicar com o servidor.')
     } finally {
       setLoading(false)

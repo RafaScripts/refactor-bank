@@ -10,6 +10,8 @@ import { formatCurrency } from '@/lib/format'
 import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 
+import { contractsApi } from '@/lib/api'
+
 export default function ContractDetailsPage() {
   const { id } = useParams()
   const { data: session } = useSession()
@@ -20,9 +22,8 @@ export default function ContractDetailsPage() {
 
   const fetchContract = async () => {
     try {
-      const res = await fetch(`/api/contracts/${id}`)
-      const json = await res.json()
-      if (json.success) setContract(json.data)
+      const data = await contractsApi.getContract(id as string)
+      if (data) setContract(data)
     } catch (e) {
       console.error(e)
     } finally {
@@ -61,14 +62,9 @@ export default function ContractDetailsPage() {
         diditVerified: false,
       }
 
-      const res = await fetch(`/api/contracts/${id}/sign`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      const json = await res.json()
-      if (json.success) {
-        setContract(json.contract)
+      const data = await contractsApi.signContract(id as string, payload)
+      if (data) {
+        setContract(data)
       }
     } catch (error) {
       console.error(error)

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { contractsApi } from '@/lib/api'
 
 interface Contract {
   _id: string
@@ -27,9 +28,8 @@ export default function ContractsPage() {
   useEffect(() => {
     async function fetchContracts() {
       try {
-        const res = await fetch('/api/contracts')
-        const json = await res.json()
-        if (json.success) setContracts(json.data)
+        const data = await contractsApi.getContracts('')
+        if (data) setContracts(data)
       } catch (e) {
         console.error(e)
       } finally {

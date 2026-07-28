@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { FileSignature, Loader2, ArrowLeft } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
+import { contractsApi } from '@/lib/api'
 
 export default function CreateContractPage() {
   const router = useRouter()
@@ -47,17 +48,9 @@ export default function CreateContractPage() {
         clientEmail: formData.clientEmail,
       }
 
-      const res = await fetch('/api/contracts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(contractPayload)
-      })
-      const json = await res.json()
-      
-      if (json.success) {
-        router.push(`/dashboard/contracts/${json.contract._id}`)
-      } else {
-        alert(json.error)
+      const data = await contractsApi.createContract(contractPayload, '')
+      if (data) {
+        router.push(`/dashboard/contracts/${data._id}`)
       }
     } catch (error) {
       console.error(error)

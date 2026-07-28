@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/format'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { contractsApi } from '@/lib/api'
 
 export default function PublicSignPage() {
   const { id } = useParams()
@@ -20,9 +21,8 @@ export default function PublicSignPage() {
   useEffect(() => {
     async function fetchContract() {
       try {
-        const res = await fetch(`/api/contracts/${id}`)
-        const json = await res.json()
-        if (json.success) setContract(json.data)
+        const data = await contractsApi.getContract(id as string)
+        if (data) setContract(data)
       } catch (e) {
         console.error(e)
       } finally {
@@ -58,16 +58,11 @@ export default function PublicSignPage() {
         diditLogId
       }
 
-      const res = await fetch(`/api/contracts/${id}/sign`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      const json = await res.json()
-      if (json.success) {
-        setContract(json.contract)
+      const data = await contractsApi.signContract(id as string, payload)
+      if (data) {
+        setContract(data)
       } else {
-        alert('Falha ao assinar: ' + json.error)
+        alert('Falha ao assinar. Tente novamente.')
       }
     } catch (error) {
       console.error(error)

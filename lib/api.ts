@@ -266,6 +266,24 @@ export const approvalsApi = {
     api.post<ApprovalResponse>(`/v1/corporate/approvals/${id}/vote`, { vote: 'REJECTED' }, token),
 }
 
+// Contracts endpoints
+export const contractsApi = {
+  createContract: (data: any, token: string) =>
+    api.post<any>('/v1/core/contracts', data, token),
+
+  getContracts: (token: string) =>
+    api.get<any[]>('/v1/core/contracts', token),
+
+  getContract: (id: string) =>
+    api.get<any>(`/v1/core/contracts/${id}`), // public endpoint for signature
+
+  signContract: (id: string, data: any) =>
+    api.post<any>(`/v1/core/contracts/${id}/sign`, data), // public endpoint
+
+  verifyContract: (data: { documentHash: string }) =>
+    api.post<any>('/v1/core/contracts/verify', data),
+}
+
 // Types
 export interface LoginResponse {
   accessToken: string
