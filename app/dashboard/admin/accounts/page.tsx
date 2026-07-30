@@ -15,14 +15,29 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Trash2, Ban, CheckCircle } from 'lucide-react'
+import { Trash2, Ban, CheckCircle, Key } from 'lucide-react'
 
 export default function AdminAccountsPage() {
   const { data: session } = useSession()
   const [accounts, setAccounts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+
+  // OKX configuration modal
+  const [selectedAccountForOkx, setSelectedAccountForOkx] = useState<any>(null)
+  const [okxApiKey, setOkxApiKey] = useState('')
+  const [okxSecretKey, setOkxSecretKey] = useState('')
+  const [okxPassphrase, setOkxPassphrase] = useState('')
+  const [savingOkx, setSavingOkx] = useState(false)
 
   const isSuperuser = session?.user?.permissions?.superuser
 
@@ -67,6 +82,38 @@ export default function AdminAccountsPage() {
     } catch (error: any) {
       toast.error(error.message || 'Erro ao excluir conta')
     }
+  }
+
+  const handleSaveOkxKeys = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!session?.user?.accessToken || !isSuperuser || !selectedAccountForOkx) return
+
+    setSavingOkx(true)
+    try {
+      await adminApi.updateOkxCredentials(
+        selectedAccountForOkx._id,
+        {
+          apiKey: okxApiKey,
+          secretKey: okxSecretKey,
+          passphrase: okxPassphrase
+        },
+        session.user.accessToken
+      )
+      toast.success('Credenciais OKX salvas com sucesso!')
+      setSelectedAccountForOkx(null)
+      fetchAccounts()
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao salvar credenciais OKX')
+    } finally {
+      setSavingOkx(false)
+    }
+  }
+
+  const openOkxModal = (acc: any) => {
+    setSelectedAccountForOkx(acc)
+    setOkxApiKey(acc.okxCredentials?.apiKey || '')
+    setOkxSecretKey(acc.okxCredentials?.secretKey || '')
+    setOkxPassphrase(acc.okxCredentials?.passphrase || '')
   }
 
   return (
@@ -147,6 +194,15 @@ export default function AdminAccountsPage() {
                           </Button>
                           <Button 
                             size="sm" 
+                            variant="outline" 
+                            onClick={() => openOkxModal(acc)}
+                            disabled={!isSuperuser}
+                            title={isSuperuser ? "Configurar Chaves OKX" : "Sem permissão"}
+                          >
+                            <Key className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
                             variant="destructive" 
                             onClick={() => handleDeleteLgpd(acc._id)}
                             disabled={!isSuperuser}
@@ -164,6 +220,55 @@ export default function AdminAccountsPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!selectedAccountForOkx} onOpenChange={(open) => !open && setSelectedAccountForOkx(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Configurar Chaves OKX</DialogTitle>
+            <DialogDescription>
+              Configure as credenciais da OKX para a conta de {selectedAccountForOkx?.ownerName}. 
+              Estas chaves serão utilizadas para conversão automática de PIX para USDT.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveOkxKeys} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="apiKey">API Key</Label>
+              <Input 
+                id="apiKey" 
+                value={okxApiKey} 
+                onChange={(e) => setOkxApiKey(e.target.value)} 
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="secretKey">Secret Key</Label>
+              <Input 
+                id="secretKey" 
+                type="password"
+                value={okxSecretKey} 
+                onChange={(e) => setOkxSecretKey(e.target.value)} 
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="passphrase">Passphrase</Label>
+              <Input 
+                id="passphrase" 
+                type="password"
+                value={okxPassphrase} 
+                onChange={(e) => setOkxPassphrase(e.target.value)} 
+                required 
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="ghost" onClick={() => setSelectedAccountForOkx(null)}>Cancelar</Button>
+              <Button type="submit" disabled={savingOkx}>
+                {savingOkx ? 'Salvando...' : 'Salvar Chaves'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

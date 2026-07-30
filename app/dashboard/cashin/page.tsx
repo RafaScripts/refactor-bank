@@ -12,6 +12,7 @@ import { useSession } from 'next-auth/react'
 import { paymentsApi } from '@/lib/api'
 import { formatCurrency } from '@/lib/format'
 import { QrCode, FileText, Copy, Check, Download, Loader2 } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
 
 export default function CashInPage() {
   const { data: session } = useSession()
@@ -20,6 +21,7 @@ export default function CashInPage() {
   // Pix states
   const [pixAmount, setPixAmount] = useState<number | string>('')
   const [pixDescription, setPixDescription] = useState('')
+  const [convertToUsdt, setConvertToUsdt] = useState(false)
   const [pixLoading, setPixLoading] = useState(false)
   const [pixResult, setPixResult] = useState<{
     qrCode: string
@@ -56,6 +58,7 @@ export default function CashInPage() {
       const result = await paymentsApi.createPixCharge({
         amount: Number(pixAmount),
         description: pixDescription || undefined,
+        convertToUsdt,
       }, token)
       setPixResult(result)
     } catch (error) {
@@ -113,6 +116,7 @@ export default function CashInPage() {
   const resetPixForm = () => {
     setPixAmount('')
     setPixDescription('')
+    setConvertToUsdt(false)
     setPixResult(null)
   }
 
@@ -179,6 +183,19 @@ export default function CashInPage() {
                         value={pixDescription}
                         onChange={(e) => setPixDescription(e.target.value)}
                         placeholder="Ex: Pagamento de serviço"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between space-x-2 py-2">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="convertToUsdt">Converter para USDT</Label>
+                        <p className="text-sm text-muted-foreground">
+                          O valor recebido será automaticamente convertido em USDT (Dólar)
+                        </p>
+                      </div>
+                      <Switch
+                        id="convertToUsdt"
+                        checked={convertToUsdt}
+                        onCheckedChange={setConvertToUsdt}
                       />
                     </div>
                     <Button type="submit" className="w-full" disabled={pixLoading}>

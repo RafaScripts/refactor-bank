@@ -252,6 +252,8 @@ export const favoritesApi = {
 export const walletApi = {
   createWallet: (token: string) =>
     api.post<WalletResponse>('/v1/core/wallet', undefined, token),
+  setupWallet: (data: { address: string; encryptedMnemonic: string }, token: string) =>
+    api.post<any>('/v1/core/wallet/setup', data, token),
 }
 
 // Approvals endpoints (PJ)
@@ -432,12 +434,15 @@ export interface WalletResponse {
 
 export interface WalletListResponse {
   owner: string
+  address?: string
+  hashMnemonic?: string
   balances: Record<string, string> | Map<string, string>
 }
 
 export interface PixChargeRequest {
   amount: number
   description?: string
+  convertToUsdt?: boolean
 }
 
 export interface PixChargeResponse {

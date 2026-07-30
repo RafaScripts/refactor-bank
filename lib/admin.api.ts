@@ -24,6 +24,9 @@ export const adminApi = {
   deleteAccountLgpd: (id: string, token: string) =>
     api.delete<any>(`/v1/admin/accounts/${id}/lgpd`, token),
 
+  updateOkxCredentials: (id: string, credentials: any, token: string) =>
+    api.patch<any>(`/v1/admin/accounts/${id}/okx-credentials`, { credentials }, token),
+
   // Statements
   getStatements: (token: string, page = 1, limit = 50) =>
     api.get<any>(`/v1/admin/statements?page=${page}&limit=${limit}`, token),

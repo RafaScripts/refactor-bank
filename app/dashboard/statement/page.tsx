@@ -18,6 +18,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { PdfExportButton } from '@/components/ui/pdf-export-button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { CryptoStatement } from './CryptoStatement'
+import { walletApi } from '@/lib/api'
 
 export default function StatementPage() {
   const { data: session } = useSession()
@@ -31,6 +34,7 @@ export default function StatementPage() {
 
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [showFilters, setShowFilters] = useState(false)
+  const [wallet, setWallet] = useState<any>(null)
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('')
@@ -64,6 +68,13 @@ export default function StatementPage() {
       setTransactions(mapped)
       setTotal(response.meta?.total || 0)
       setTotalPages(response.meta?.lastPage || 1)
+      
+      try {
+        const walletRes = await balanceApi.getWallets(token)
+        setWallet(walletRes)
+      } catch (err) {
+        // user might not have a wallet yet, ignore
+      }
     } catch (err) {
       console.error('Erro ao carregar extrato:', err)
     } finally {
@@ -159,8 +170,21 @@ export default function StatementPage() {
         />
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid sm:grid-cols-3 gap-4">
+      <Tabs defaultValue="BRL" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="BRL">Extrato BRL</TabsTrigger>
+          {(wallet?.address || parseFloat(wallet?.balances?.USDT || wallet?.balances?.get?.('USDT') || '0') > 0 || true) && (
+            <TabsTrigger value="USDT">Extrato USDT</TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value="USDT" className="mt-6">
+          <CryptoStatement token={token!} wallet={wallet} setWallet={setWallet} />
+        </TabsContent>
+
+        <TabsContent value="BRL" className="mt-6 space-y-6">
+          {/* Summary Cards */}
+          <div className="grid sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -389,6 +413,8 @@ export default function StatementPage() {
           )}
         </CardContent>
       </Card>
+      </TabsContent>
+      </Tabs>
 
       {/* Transaction Detail Modal */}
       <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
